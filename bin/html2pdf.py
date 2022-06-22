@@ -5,13 +5,12 @@ import typer
 from pdfy import Pdfy
 
 
-# TODO: Denne fungerer ikke.
+# TODO: Denne fungerer ikke - problemer med chromedriver og pdfy
 def html2pdf(src_file_path: str, target_file_path: str):
     """Convert html to pdf"""
-    norm_file_path = ""
     try:
         p = Pdfy()
-        p.html_to_pdf(src_file.path, tmp_file.path)
+        p.html_to_pdf(src_file_path, target_file_path)
     except Exception as e:
         print(e)
         sys.exit(1)

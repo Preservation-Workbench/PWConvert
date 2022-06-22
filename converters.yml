@@ -9,7 +9,7 @@ Extensible Markup Language:
       command: convert_sdo.php <source> <target>
       target-ext: pdf
 Hypertext Markup Language:
-  command:  html-to-pdf.py <source> <target> || pandoc <source> -s -o <target>  && pdf2text.py <target>
+  command: html-to-pdf.py <source> <target> || pandoc <source> -s -o <target>  && pdf2text.py <target>
   target-ext: pdf
 Markdown:
   command: text2utf8.py <source> <target>
