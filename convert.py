@@ -60,6 +60,25 @@ def convert_html_file(source_file_path, target_file_path, normalized):
     return normalized
 
 
+def convert_pdf_to_pdfa_file(source_file_path, target_file_path, normalized):
+    converted_file_path = convert.pdf2pdfa(source_file_path, target_file_path)
+    # also need the version in UTF-8 .txt file
+    convert.pdf2text(source_file_path)
+
+    if not os.path.exists(converted_file_path):
+        normalized['msg'] = 'Conversion failed'
+        normalized['norm_file_path'] = None
+    else:
+        normalized['msg'] = 'Converted successfully'
+        normalized['norm_file_path'] = target_file_path
+    return normalized
+
+
+def copy_pdfa(source_file_path, target_file_path):
+    shutil.copy(source_file_path, target_file_path)
+    convert.pdf2text(source_file_path)
+
+
 class File:
     """Contains methods for converting files"""
 
@@ -100,7 +119,7 @@ class File:
                 conv = converters[self.format]
 
                 target_ext = self.ext if 'target-ext' not in conv else conv['target-ext']
-                self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
+                # self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
 
                 match self.format:
                     case "Plain Text File":
@@ -109,7 +128,15 @@ class File:
                         convert_txt_file(source_file_path, target_file_path, self.normalized)
                     case "Hypertext Markup Language":
                         convert_html_file(source_file_path, target_file_path, self.normalized)
-
+                    case "Extensible Markup Language":
+                        """
+                        Her kjører vi php skriptet 'convert_sdo.php' håper vi kan endre det til noe annet
+                        """
+                        self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
+                    case "Acrobat PDF 1.7 - Portable Document Format":
+                        convert_pdf_to_pdfa_file(source_file_path, target_file_path, self.normalized)
+                    case "Acrobat PDF/A - Portable Document Format:":
+                        copy_pdfa(source_file_path, target_file_path)
 
         else:
             self.normalized['msg'] = 'Manually converted'
@@ -205,7 +232,6 @@ class File:
 
 
 def run_siegfried(source_dir, target_dir, tsv_path, zipped=False):
-
     """
     Generate tsv file with info about file types by running
 
@@ -213,7 +239,7 @@ def run_siegfried(source_dir, target_dir, tsv_path, zipped=False):
         source_dir: the directory containing the files to be checked
         target_dir: The target directory where the csv file will be saved
         tsv_path: The target path for tsv file
-
+        zipped: nothing...
     """
     if not zipped:
         print('\nIdentifying file types...')
@@ -221,7 +247,7 @@ def run_siegfried(source_dir, target_dir, tsv_path, zipped=False):
     csv_path = os.path.join(target_dir, 'siegfried.csv')
     os.chdir(source_dir)
     subprocess.run(
-            'sf -z -csv * > ' + csv_path,
+        'sf -z -csv * > ' + csv_path,
         stderr=subprocess.DEVNULL,
         stdout=subprocess.DEVNULL,
         shell=True

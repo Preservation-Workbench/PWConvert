@@ -9,6 +9,7 @@ import cchardet as chardet
 def text2utf8(input_file: str, output_file: str):
     """
     Convert text files to utf8 with Linux file endings
+    target extension : .txt
 
     Args:
         input_file: path for the file to be converted
