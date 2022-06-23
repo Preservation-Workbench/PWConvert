@@ -24,6 +24,7 @@ import subprocess
 import zipfile
 from os.path import relpath
 from pathlib import Path
+import bin as convert
 
 import petl as etl
 import typer
@@ -35,6 +36,28 @@ with open("converters.yml", "r") as yamlfile:
     converters = yaml.load(yamlfile)
 
 pwconv_path = pathlib.Path(__file__).parent.resolve()
+
+
+def convert_txt_file(source_file_path, target_file_path, normalized):
+    converted_file_path = convert.text2utf8(source_file_path, target_file_path)
+    if not os.path.exists(converted_file_path):
+        normalized['msg'] = 'Conversion failed'
+        normalized['norm_file_path'] = None
+    else:
+        normalized['msg'] = 'Converted successfully'
+        normalized['norm_file_path'] = target_file_path
+    return normalized
+
+
+def convert_html_file(source_file_path, target_file_path, normalized):
+    converted_file_path = convert.html2pdf(source_file_path, target_file_path)
+    if not os.path.exists(converted_file_path):
+        normalized['msg'] = 'Conversion failed'
+        normalized['norm_file_path'] = None
+    else:
+        normalized['msg'] = 'Converted successfully'
+        normalized['norm_file_path'] = target_file_path
+    return normalized
 
 
 class File:
@@ -66,10 +89,10 @@ class File:
                 self._zip_to_norm(source_dir, target_dir)
             else:
                 source_file_path = os.path.join(source_dir, self.path)
-                norm_file_path = os.path.join(target_dir, self.path)
+                target_file_path = os.path.join(target_dir, self.path)
 
                 if self.format not in converters:
-                    shutil.copyfile(source_file_path, norm_file_path)
+                    shutil.copyfile(source_file_path, target_file_path)
                     self.normalized['msg'] = 'Conversion failed'
                     self.normalized['norm_file_path'] = None
                     return self.normalized
@@ -77,7 +100,16 @@ class File:
                 conv = converters[self.format]
 
                 target_ext = self.ext if 'target-ext' not in conv else conv['target-ext']
-                self._run_convertion_command(conv, source_file_path, norm_file_path, target_dir, target_ext)
+                self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
+
+                match self.format:
+                    case "Plain Text File":
+                        convert_txt_file(source_file_path, target_file_path, self.normalized)
+                    case "Markdown":
+                        convert_txt_file(source_file_path, target_file_path, self.normalized)
+                    case "Hypertext Markup Language":
+                        convert_html_file(source_file_path, target_file_path, self.normalized)
+
 
         else:
             self.normalized['msg'] = 'Manually converted'
@@ -86,13 +118,15 @@ class File:
 
     def _run_convertion_command(self, conv, source_file_path, norm_file_path, target_dir, target_ext):
         """
-        runs the convertion command
-        @param conv:
-        @param source_file_path:
-        @param norm_file_path:
-        @param target_dir:
-        @param target_ext:
-        """
+          Convert function
+
+          Args:
+              conv: which converter to use
+              source_file_path: path for the converted file
+              norm_file_path: normalized file path
+              target_dir: path where the converted result should be saved
+              target_ext: what extension the source file will be saved to
+          """
         if 'source-ext' in conv and self.ext in conv['source-ext']:
             cmd = conv['source-ext'][self.ext]['command']
 
