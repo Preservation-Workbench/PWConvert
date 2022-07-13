@@ -122,19 +122,9 @@ class File:
         cmd = cmd.replace('<source>', '"' + source_file_path + '"')
         cmd = cmd.replace('<target>', '"' + target_file_path + '"')
 
+        print(cmd)
         bin_path = os.path.join(pwconv_path, 'bin')
 
-        if "&&" in cmd:
-            new_cmd = []
-            split_cmd = cmd.split("&&")
-            for x in split_cmd:
-                if ".py" in x:
-                    x = x.strip()
-                    x = bin_path+"/"+x
-                new_cmd.append(x)
-            cmd = " && ".join(new_cmd)
-        elif "&&" not in cmd and ".py" in cmd:
-            cmd = bin_path+"/"+cmd
         result = util.run_shell_command(cmd, cwd=bin_path, shell=True)
 
         if not os.path.exists(target_file_path):
@@ -204,7 +194,6 @@ class File:
     def _convert_txt_file(self, converter, source_file_path, target_file_path, target_dir):
 
         result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
-        print(result)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -216,7 +205,6 @@ class File:
     def _convert_html_file(self, converter, source_file_path, target_file_path, target_dir):
 
         result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
-        print(result)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -253,7 +241,6 @@ class File:
     def _convert_markdown_file(self, converter, source_file_path, target_file_path, target_dir):
 
         result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
-        print(result)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
