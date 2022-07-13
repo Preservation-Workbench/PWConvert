@@ -19,12 +19,11 @@ import os
 import pathlib
 import re
 import shutil
-import signal
 import subprocess
 import zipfile
 from os.path import relpath
 from pathlib import Path
-import bin as convert
+import util
 
 import petl as etl
 import typer
@@ -36,47 +35,6 @@ with open("converters.yml", "r") as yamlfile:
     converters = yaml.load(yamlfile)
 
 pwconv_path = pathlib.Path(__file__).parent.resolve()
-
-
-def convert_txt_file(source_file_path, target_file_path, normalized):
-    converted_file_path = convert.text2utf8(source_file_path, target_file_path)
-    if not os.path.exists(converted_file_path):
-        normalized['msg'] = 'Conversion failed'
-        normalized['norm_file_path'] = None
-    else:
-        normalized['msg'] = 'Converted successfully'
-        normalized['norm_file_path'] = target_file_path
-    return normalized
-
-
-def convert_html_file(source_file_path, target_file_path, normalized):
-    converted_file_path = convert.html2pdf(source_file_path, target_file_path)
-    if not os.path.exists(converted_file_path):
-        normalized['msg'] = 'Conversion failed'
-        normalized['norm_file_path'] = None
-    else:
-        normalized['msg'] = 'Converted successfully'
-        normalized['norm_file_path'] = target_file_path
-    return normalized
-
-
-def convert_pdf_to_pdfa_file(source_file_path, target_file_path, normalized):
-    converted_file_path = convert.pdf2pdfa(source_file_path, target_file_path)
-    # also need the version in UTF-8 .txt file
-    convert.pdf2text(source_file_path)
-
-    if not os.path.exists(converted_file_path):
-        normalized['msg'] = 'Conversion failed'
-        normalized['norm_file_path'] = None
-    else:
-        normalized['msg'] = 'Converted successfully'
-        normalized['norm_file_path'] = target_file_path
-    return normalized
-
-
-def copy_pdfa(source_file_path, target_file_path):
-    shutil.copy(source_file_path, target_file_path)
-    convert.pdf2text(source_file_path)
 
 
 class File:
@@ -112,68 +70,81 @@ class File:
 
                 if self.format not in converters:
                     shutil.copyfile(source_file_path, target_file_path)
-                    self.normalized['msg'] = 'Conversion failed'
+                    self.normalized['msg'] = 'Conversion not supported'
                     self.normalized['norm_file_path'] = None
                     return self.normalized
 
-                conv = converters[self.format]
-
-                target_ext = self.ext if 'target-ext' not in conv else conv['target-ext']
-                # self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
+                converter = converters[self.format]
 
                 match self.format:
                     case "Plain Text File":
-                        convert_txt_file(source_file_path, target_file_path, self.normalized)
+                        self._convert_txt_file(converter, source_file_path, target_file_path, target_dir)
                     case "Markdown":
-                        convert_txt_file(source_file_path, target_file_path, self.normalized)
+                        self._convert_markdown_file(converter, source_file_path, target_file_path, target_dir)
                     case "Hypertext Markup Language":
-                        convert_html_file(source_file_path, target_file_path, self.normalized)
+                        self._convert_html_file(converter, source_file_path, target_file_path, target_dir)
                     case "Extensible Markup Language":
                         """
                         Her kjører vi php skriptet 'convert_sdo.php' håper vi kan endre det til noe annet
                         """
-                        self._run_convertion_command(conv, source_file_path, target_file_path, target_dir, target_ext)
+                        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
                     case "Acrobat PDF 1.7 - Portable Document Format":
-                        convert_pdf_to_pdfa_file(source_file_path, target_file_path, self.normalized)
-                    case "Acrobat PDF/A - Portable Document Format:":
-                        copy_pdfa(source_file_path, target_file_path)
+                        self._convert_pdf_file(converter, source_file_path, target_file_path, target_dir)
+                    case "Acrobat PDF/A - Portable Document Format":
+                        self._convert_pdfa_file(converter, source_file_path, target_file_path, target_dir)
 
         else:
             self.normalized['msg'] = 'Manually converted'
 
         return self.normalized
 
-    def _run_convertion_command(self, conv, source_file_path, norm_file_path, target_dir, target_ext):
+    def _run_convertion_command(self, converter, source_file_path, target_file_path, target_dir):
         """
           Convert function
 
           Args:
-              conv: which converter to use
-              source_file_path: path for the converted file
-              norm_file_path: normalized file path
-              target_dir: path where the converted result should be saved
-              target_ext: what extension the source file will be saved to
+              converter: which converter to use
+              source_file_path: source file path for the file to be converted
+              target_file_path: target file path for where the conterted file should be saved
+              target_dir: path directory where the converted result should be saved
           """
-        if 'source-ext' in conv and self.ext in conv['source-ext']:
-            cmd = conv['source-ext'][self.ext]['command']
+        target_ext = ""
+        if 'source-ext' in converter and self.ext in converter['source-ext']:
+            cmd = converter['source-ext'][self.ext]['command']
 
-            if 'target-ext' in conv['source-ext'][self.ext]:
-                target_ext = conv['source-ext'][self.ext]['target-ext']
+            if 'target-ext' in converter['source-ext'][self.ext]:
+                target_ext = converter['source-ext'][self.ext]['target-ext']
         else:
-            cmd = conv['command']
-        if self.ext != target_ext:
-            norm_file_path = os.path.join(target_dir, self.path + '.' + target_ext)
-        cmd = cmd.replace('<source>', '"' + source_file_path + '"')
-        cmd = cmd.replace('<target>', '"' + norm_file_path + '"')
-        bin_path = os.path.join(pwconv_path, 'bin')
-        run_shell_command(cmd, cwd=bin_path, shell=True)
+            cmd = converter['command']
+        if target_ext and self.ext != target_ext:
+            target_file_path = os.path.join(target_dir, self.path + '.' + target_ext)
 
-        if not os.path.exists(norm_file_path):
+        cmd = cmd.replace('<source>', '"' + source_file_path + '"')
+        cmd = cmd.replace('<target>', '"' + target_file_path + '"')
+
+        bin_path = os.path.join(pwconv_path, 'bin')
+
+        if "&&" in cmd:
+            new_cmd = []
+            split_cmd = cmd.split("&&")
+            for x in split_cmd:
+                if ".py" in x:
+                    x = x.strip()
+                    x = bin_path+"/"+x
+                new_cmd.append(x)
+            cmd = " && ".join(new_cmd)
+        elif "&&" not in cmd and ".py" in cmd:
+            cmd = bin_path+"/"+cmd
+        result = util.run_shell_command(cmd, cwd=bin_path, shell=True)
+
+        if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
             self.normalized['norm_file_path'] = None
         else:
             self.normalized['msg'] = 'Converted successfully'
-            self.normalized['norm_file_path'] = norm_file_path
+            self.normalized['norm_file_path'] = target_file_path
+
+        return result
 
     def _zip_to_norm(self, source_dir, target_dir):
         """Exctract all files, convert them, and zip them again"""
@@ -229,6 +200,68 @@ class File:
 
         rm_tmp(paths)
         return False
+
+    def _convert_txt_file(self, converter, source_file_path, target_file_path, target_dir):
+
+        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        print(result)
+
+        if not os.path.exists(target_file_path):
+            self.normalized['msg'] = 'Conversion failed'
+            self.normalized['norm_file_path'] = None
+        else:
+            self.normalized['msg'] = 'Converted successfully'
+            self.normalized['norm_file_path'] = target_file_path
+
+    def _convert_html_file(self, converter, source_file_path, target_file_path, target_dir):
+
+        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        print(result)
+
+        if not os.path.exists(target_file_path):
+            self.normalized['msg'] = 'Conversion failed'
+            self.normalized['norm_file_path'] = None
+        else:
+            self.normalized['msg'] = 'Converted successfully'
+            self.normalized['norm_file_path'] = target_file_path
+        return self.normalized
+
+    def _convert_pdf_file(self, converter, source_file_path, target_file_path, target_dir):
+
+        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+
+        if not os.path.exists(target_file_path):
+            self.normalized['msg'] = 'Conversion failed'
+            self.normalized['norm_file_path'] = None
+        else:
+            self.normalized['msg'] = 'Converted successfully'
+            self.normalized['norm_file_path'] = target_file_path
+        return result
+
+    def _convert_pdfa_file(self, converter, source_file_path, target_file_path, target_dir):
+
+        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+
+        if not os.path.exists(target_file_path):
+            self.normalized['msg'] = 'Conversion failed'
+            self.normalized['norm_file_path'] = None
+        else:
+            self.normalized['msg'] = 'Converted successfully'
+            self.normalized['norm_file_path'] = target_file_path
+        return result
+
+    def _convert_markdown_file(self, converter, source_file_path, target_file_path, target_dir):
+
+        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        print(result)
+
+        if not os.path.exists(target_file_path):
+            self.normalized['msg'] = 'Conversion failed'
+            self.normalized['norm_file_path'] = None
+        else:
+            self.normalized['msg'] = 'Converted successfully'
+            self.normalized['norm_file_path'] = target_file_path
+        return result
 
 
 def run_siegfried(source_dir, target_dir, tsv_path, zipped=False):
@@ -292,38 +325,6 @@ def extract_nested_zip(zipped_file, to_folder):
             if re.search(r'\.zip$', filename):
                 filespec = os.path.join(root, filename)
                 extract_nested_zip(filespec, root)
-
-
-def run_shell_command(command, cwd=None, timeout=30, shell=False):
-    """Run shell command"""
-    os.environ['PYTHONUNBUFFERED'] = "1"
-    stdout = []
-    stderr = []
-    mix = []  # TODO: Fjern denne mm
-
-    # sys.stdout.flush()
-
-    proc = subprocess.Popen(
-        command,
-        cwd=cwd,
-        shell=shell,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-    )
-
-    try:
-        proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        os.kill(proc.pid, signal.SIGINT)
-
-    for line in proc.stdout:
-        stdout.append(line.rstrip())
-
-    for line in proc.stderr:
-        stderr.append(line.rstrip())
-
-    return proc.returncode, stdout, stderr, mix
 
 
 def remove_fields(table, *args):
