@@ -17,7 +17,7 @@ def pdf2text(file_path: str):
     split_ext = os.path.splitext(file_path)
     output_file = split_ext[0] + '.txt'
 
-    command = 'gs -sDEVICE=txtwrite -q -dNOPAUSE -dBATCH -sOutputFile="{output_file}" "{file_path}"'
+    command = f'gs -sDEVICE=txtwrite -q -dNOPAUSE -dBATCH -sOutputFile="{output_file}" "{file_path}"'
     status_code = os.system(command)
 
     return True if status_code == 0 else False
