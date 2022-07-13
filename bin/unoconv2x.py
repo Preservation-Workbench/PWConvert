@@ -3,7 +3,7 @@ import os
 import sys
 import typer
 
-from convert import run_shell_command
+from util import run_shell_command
 
 
 def unoconv2x(source_path: str, target_path: str, target_ext: str, mime_type: str):

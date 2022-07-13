@@ -3,7 +3,7 @@
 import os
 import typer
 
-from convert import run_shell_command
+from util import run_shell_command
 
 
 def mhtml2pdf(source_file: str, target_file: str):
