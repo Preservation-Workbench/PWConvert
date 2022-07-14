@@ -435,6 +435,7 @@ def convert_folder(source_dir: str, target_dir: str, zipped: bool = False):
                 errors = True
                 result_file.write(row['result'] + ': ' + row['source_file_path'] +
                                   ' (' + row['mime_type'] + ')\n')
+                print(row['mime_type'] + " " + row['result'])
 
             if row['result'] in ('Converted successfully', 'Manually converted'):
                 converted_now = True
