@@ -193,7 +193,7 @@ class File:
 
     def _convert_txt_file(self, converter, source_file_path, target_file_path, target_dir):
 
-        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -204,7 +204,7 @@ class File:
 
     def _convert_html_file(self, converter, source_file_path, target_file_path, target_dir):
 
-        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -212,7 +212,6 @@ class File:
         else:
             self.normalized['msg'] = 'Converted successfully'
             self.normalized['norm_file_path'] = target_file_path
-        return self.normalized
 
     def _convert_pdf_file(self, converter, source_file_path, target_file_path, target_dir):
 
@@ -224,11 +223,10 @@ class File:
         else:
             self.normalized['msg'] = 'Converted successfully'
             self.normalized['norm_file_path'] = target_file_path
-        return result
 
     def _convert_pdfa_file(self, converter, source_file_path, target_file_path, target_dir):
 
-        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -236,11 +234,10 @@ class File:
         else:
             self.normalized['msg'] = 'Converted successfully'
             self.normalized['norm_file_path'] = target_file_path
-        return result
 
     def _convert_markdown_file(self, converter, source_file_path, target_file_path, target_dir):
 
-        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
@@ -248,8 +245,6 @@ class File:
         else:
             self.normalized['msg'] = 'Converted successfully'
             self.normalized['norm_file_path'] = target_file_path
-        return result
-
 
 def run_siegfried(source_dir, target_dir, tsv_path, zipped=False):
     """
