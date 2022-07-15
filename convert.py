@@ -76,7 +76,7 @@ class File:
 
                 converter = converters[self.format]
 
-                match self.format:
+                match self.mime_type:
                     case "Plain Text File":
                         self._convert_txt_file(converter, source_file_path, target_file_path, target_dir)
                     case "Markdown":
@@ -88,10 +88,14 @@ class File:
                         Her kjører vi php skriptet 'convert_sdo.php' håper vi kan endre det til noe annet
                         """
                         self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
-                    case "Acrobat PDF 1.7 - Portable Document Format":
-                        self._convert_pdf_file(converter, source_file_path, target_file_path, target_dir)
-                    case "Acrobat PDF/A - Portable Document Format":
-                        self._convert_pdfa_file(converter, source_file_path, target_file_path, target_dir)
+                    case "'application/pdf'":
+                        if self.format == "Acrobat PDF/A - Portable Document Format":
+                            self._convert_pdfa_file(converter, source_file_path, target_file_path, target_dir)
+                        elif self.format == "Acrobat PDF 1.7 - Portable Document Format":
+                            self._convert_pdf_file(converter, source_file_path, target_file_path, target_dir)
+                        else:
+                            self.normalized['msg'] = self.format + ' Conversion not supported'
+
 
         else:
             self.normalized['msg'] = 'Manually converted'
