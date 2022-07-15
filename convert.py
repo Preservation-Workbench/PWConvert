@@ -215,7 +215,7 @@ class File:
 
     def _convert_pdf_file(self, converter, source_file_path, target_file_path, target_dir):
 
-        result = self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
+        self._run_convertion_command(converter, source_file_path, target_file_path, target_dir)
 
         if not os.path.exists(target_file_path):
             self.normalized['msg'] = 'Conversion failed'
