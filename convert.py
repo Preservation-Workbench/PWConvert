@@ -57,7 +57,8 @@ with open(APP_CONFIG_FILE, "r") as properties:
     db_dir, db_name = properties["database"]["path"], properties["database"]["name"]
 
 
-def get_name(var):
+def get_var_name(var):
+    """Get name of variable as string"""
     for fi in reversed(inspect.stack()):
         names = [
             var_name
@@ -91,8 +92,16 @@ def convert_folder_entrypoint():
     )
     continue_conversion = properties["database"]["continue-conversion"]
 
-    for dir in [source_dir, target_dir]:
-            console.print("Variable '" + get_name(dir) + "' points to missing directory'" + str(source_dir) + "'", style="bold red")
+    for dir in [source_dir, target_dir, db_dir]:
+        if not Path(dir).is_dir():
+            console.print(
+                "Variable '"
+                + get_var_name(dir)
+                + "' points to missing object '"
+                + str(dir)
+                + "'",
+                style="bold red",
+            )
             raise typer.Exit(code=1)
 
     with StorageSqliteImpl(db_dir, db_name, continue_conversion) as file_storage:
@@ -107,10 +116,13 @@ def convert_folder(
     converted_now = False
     errors = False
 
-    Path(target_dir).mkdir(parents=True, exist_ok=True)
+    #Path(target_dir).mkdir(parents=True, exist_ok=True)
 
-    if not os.path.isfile(tsv_source_path):
+    if not Path(tsv_source_path).is_file():
         run_siegfried(source_dir, target_dir, tsv_source_path, zipped)
+        if not Path(tsv_source_path).is_file():
+            console.print("Siegfried tsv-file missing: '" + tsv_source_path + "'", style="bold red")
+            raise typer.Exit(code=1)
 
     table = etl.fromtsv(tsv_source_path)
     table = etl.rename(
@@ -130,8 +142,7 @@ def convert_folder(
     # Remove listing of files in zip
     table = etl.select(table, lambda rec: "#" not in rec.source_file_path)
     # TODO: Ikke fullgod sjekk på embedded dokument i linje over da # faktisk kan forekomme i filnavn
-    table.row_count = etl.nrows(table)
-
+    row_count = etl.nrows(table)
     file_count = sum([len(files) for r, d, files in os.walk(source_dir)])
 
     if row_count == 0:
