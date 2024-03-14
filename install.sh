@@ -28,7 +28,7 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 DISTRO=$(lsb_release -sc) # Get distro codename
-if [[ "${DISTRO}" != @(uma|ulyana|focal|jammy|Ulyssa|una|vanessa) ]]; then
+if [[ "${DISTRO}" != @(uma|ulyana|focal|jammy|Ulyssa|una|vanessa|virginia) ]]; then
     cecho "RED" "Distro not supported. Exiting script.."; exit 1;
 fi
 
@@ -146,6 +146,6 @@ fi
 
 cecho "CYAN" "Install or update python dependencies.."
 sudo -H -u $OWNER bash -c "pip3 install petl unoserver ruamel.yaml typer[all] cchardet pdfkit python-magic ocrmypdf \
-psutil ezdxf[draw] xvfb --upgrade;";
+psutil ezdxf[draw] xvfbwrapper --upgrade;";
 recho $?
 
