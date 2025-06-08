@@ -152,13 +152,16 @@ def convert(
         }
 
         start_uno_server()
-        msg = f"Converts {count_remains} files. "
-        if dest == source and keep_originals is False:
+        if identify_only:
+            msg = f"Identifies {count_remains} files. "
+        else:
+            msg = f"Converts {count_remains} files. "
+        if dest == source and keep_originals is False and not identify_only:
             msg += ("You have chosen to convert files within source folder "
                     "and not keep original files. This deletes original files "
                     "that are converted. Consider backing up folder before "
                     "proceeding to safeguard agains data loss.")
-        elif dest == source:
+        elif dest == source and not identify_only:
             msg += "Files marked with `kept: false` will be deleted. "
 
         msg += "Continue? [y/n] "
@@ -205,7 +208,10 @@ def convert(
         pool.join()
 
         duration = str(datetime.timedelta(seconds=round(time.time() - t0)))
-        console.print('\nConversion finished in ' + duration)
+        if identify_only:
+            console.print('\nIdentification finished in ' + duration)
+        else:
+            console.print('\nConversion finished in ' + duration)
         conds, params = store.get_conds(finished=True, status='accepted',
                                         timestamp=timestamp)
         count_accepted = store.get_row_count(conds, params)
@@ -313,8 +319,9 @@ def convert_folder(
                                     debug, set_source_ext, identify_only,
                                     keep_originals)
 
-            # If conversion failed
-            if norm is False:
+            if norm is None:  # --identify-only
+                pass
+            elif norm is False:  # conversion failed
                 if src_file.status != 'accepted':
                     console.print('  ' + src_file.status, style="bold red")
             elif type(norm) is str:
