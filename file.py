@@ -242,6 +242,12 @@ class File:
                 if from_path == dest_path:
                     # Move file back when conversion failes
                     shutil.copyfile(temp_path, source_path)
+                if os.path.isfile(dest_path):
+                    # Remove possibel corrupted file
+                    os.remove(dest_path)
+                    # Pause to let the file be actually deleted
+                    # so that we don't get errors in subsequent code
+                    time.sleep(0.1)
                 elif os.path.isdir(dest_path):
                     shutil.rmtree(dest_path)
                     time.sleep(0.1)
