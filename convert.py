@@ -313,7 +313,7 @@ def convert_folder(
             print(f"\r{percent}% | "
                   f"{row['path'][0:100]}", end=" ", flush=True)
 
-            unidentify = reconvert or identify_only
+            unidentify = identify_only
             src_file = File(row, pwconv_path, unidentify)
             norm = src_file.convert(source_dir, dest_dir, orig_ext,
                                     debug, set_source_ext, identify_only,
