@@ -154,6 +154,7 @@ class File:
             else:
                 mime_ext = mimetypes.guess_extension(self.mime)
 
+        # Add extension to source files when option --set-source-ext
         if set_source_ext and self.source_id is None:
             old_path = str(Path(source_dir, self.path))
             new_path = str(Path(source_dir, self._parent, self._stem + mime_ext))
@@ -165,6 +166,7 @@ class File:
         if identify_only:
             return None
 
+        # Set converter for special puid or source-ext defined for the mime type
         if 'puid' in converter and self.puid in converter['puid']:
             converter.update(converter['puid'][self.puid])
         elif 'source-ext' in converter and self.ext in converter['source-ext']:

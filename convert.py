@@ -82,7 +82,8 @@ def convert(
         default=False, help="Check if files in source match files in database"
     ),
     set_source_ext: bool = typer.Option(
-        default=False, help="Check if files in source match files in database"
+        default=False,
+        help="Add or change extension on source files based on mimetype"
     ),
     from_path: str = typer.Option(
         default=None,

@@ -46,9 +46,9 @@ application/msword:
   dest-ext: pdf
 application/octet-stream:
   puid:
-    fmt/394: # .DS_Store
+    fmt/394:  # .DS_Store
       keep: false
-    fmt/473: # MS Office Owner File
+    fmt/473:  # MS Office Owner File
       keep: false
 application/oxps:
   # Convert xps to pdf/a. This requires installation of GhostPDL from source.
