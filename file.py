@@ -143,11 +143,7 @@ class File:
         if self.mime in ['', 'None', None]:
             self.set_metadata(source_path, source_dir)
 
-        if self.mime not in converters:
-            self.status = 'skipped'
-            converter = {}
-        else:
-            converter = converters[self.mime]
+        converter = converters[self.mime] if self.mime in converters else {}
 
         mime_ext = converter.get('ext')
         mime_ext = '.' + mime_ext.lstrip('.') if mime_ext else None
@@ -169,29 +165,6 @@ class File:
         if identify_only:
             return None
 
-        copy_path = Path(dest_dir, self.path)
-        os.makedirs(os.path.dirname(copy_path), exist_ok=True)
-        norm_path = None
-        keep = keep_originals or converter.get('keep', False) 
-        if self.source_id is None:
-            mime, encoding = mimetypes.guess_type(self.path)
-            # Changes extension if it's not right
-            if not self.ext and (self.mime != 'application/octet-stream'):
-                self.kept = None
-                dest_name = self._stem + ('' if not mime_ext else mime_ext)
-                copy_path = Path(dest_dir, self._parent, dest_name)
-                norm_path = relpath(copy_path, start=dest_dir)
-            if source_dir != dest_dir:
-                try:
-                    shutil.copyfile(Path(source_dir, self.path), copy_path)
-                except Exception as e:
-                    frame = getframeinfo(currentframe())
-                    filename = frame.filename
-                    line = frame.lineno - 2
-                    print(filename + ':' + str(line), e)
-            elif norm_path:
-                shutil.move(Path(source_dir, self.path), copy_path)
-
         if 'puid' in converter and self.puid in converter['puid']:
             converter.update(converter['puid'][self.puid])
         elif 'source-ext' in converter and self.ext in converter['source-ext']:
@@ -202,10 +175,10 @@ class File:
         dest_path = os.path.join(dest_dir, self._parent, self._stem)
         temp_path = os.path.join('/tmp/convert',  self.path)
         dest_path = os.path.abspath(dest_path)
+        os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+        norm_path = None
 
-        if norm_path:
-            self.status = 'renamed'
-        elif accept:
+        if accept:
             self.status = 'accepted'
             self.kept = True
         elif self.mime == 'application/encrypted':
@@ -239,9 +212,6 @@ class File:
                                                      shell=True, timeout=timeout)
 
             if returncode or not os.path.exists(dest_path):
-                if from_path == dest_path:
-                    # Move file back when conversion failes
-                    shutil.copyfile(temp_path, source_path)
                 if os.path.isfile(dest_path):
                     # Remove possibel corrupted file
                     os.remove(dest_path)
@@ -272,32 +242,61 @@ class File:
                     os.remove(from_path)
 
                 norm_path = False
+                self.kept = True
             else:
                 self.status = 'converted'
                 norm_path = relpath(dest_path, start=dest_dir)
+                if 'keep' in converter and converter['keep'] is True:
+                    self.kept = True
 
             if os.path.isfile(temp_path):
                 os.remove(temp_path)
             elif os.path.isdir(temp_path):
                 shutil.rmtree(temp_path)
+
         elif 'keep' in converter and converter['keep'] is False:
             self.status = 'removed'
+            self.kept = False
         else:
             self.status = 'skipped'
+            self.kept = True
+
+        # Copy file from `source_dir` if it's an original file and
+        # it should be kept, accepted or if conversion failed
+        copy_path = Path(dest_dir, self.path)
+        if self.kept and self.source_id is None:
+            mime, encoding = mimetypes.guess_type(self.path)
+            if not self.ext or (
+                mime is not None and mime != self.mime and
+                self.ext != mime_ext and
+                self.mime != 'application/octet-stream'
+            ):
+                self.status = 'renamed'
+                self.kept = None
+                dest_name = self._stem + ('' if not mime_ext else mime_ext)
+                copy_path = Path(dest_dir, self._parent, dest_name)
+                norm_path = relpath(copy_path, start=dest_dir)
+            if source_dir != dest_dir:
+                try:
+                    shutil.copyfile(Path(source_dir, self.path), copy_path)
+                except Exception as e:
+                    frame = getframeinfo(currentframe())
+                    filename = frame.filename
+                    line = frame.lineno
+                    print(filename + ':' + str(line), e)
+            elif self.status == 'renamed':
+                shutil.move(Path(source_dir, self.path), copy_path)
 
         if norm_path:
             # Remove file previously moved to dest because it could
             # not be converted
             dest_path = Path(dest_dir, norm_path)
             if (
-                not converter.get('keep', False)
-                and not (keep_originals and converter.get('keep', True))
+                not self.kept
                 and os.path.isfile(copy_path)
                 and str(dest_path).lower() != str(copy_path).lower()
             ):
                 copy_path.unlink()
-            elif keep and self.status != 'renamed':
-                self.kept = True
 
             if os.path.isdir(dest_path):
                 return norm_path
@@ -314,7 +313,7 @@ class File:
             new_file = File(row, self._pwconv_path, True)
             new_file.set_metadata(str(dest_path), dest_dir)
 
-            if self.status == 'renamed' and keep:
+            if self.status == 'renamed':
                 return new_file
 
             # If the file is converted again with the same extension,
