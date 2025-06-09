@@ -186,7 +186,7 @@ class File:
         elif self.mime == 'application/encrypted':
             self.status = 'protected'
             self.kept = True
-        elif 'command' in converter:
+        elif 'command' in converter and converter['command'] is not None:
             from_path = source_path
 
             dest_ext = self.get_dest_ext(converter, dest_path, orig_ext)
