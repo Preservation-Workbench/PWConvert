@@ -276,12 +276,11 @@ def convert_folder(
             )
             store.update_status(conds, params, 'new')
 
-        else:
-            conds, params = store.get_conds(
-                mime=mime, puid=puid, status=status, subpath=subpath, ext=ext,
-                from_path=from_path, to_path=to_path, timestamp=timestamp,
-                reconvert=identify_only, retry=retry
-            )
+        conds, params = store.get_conds(
+            mime=mime, puid=puid, status=status, subpath=subpath, ext=ext,
+            from_path=from_path, to_path=to_path, timestamp=timestamp,
+            reconvert=identify_only, retry=(retry or reconvert)
+        )
         table = store.get_rows(conds, params, limit=1)
 
         # loop through all files and run conversion:

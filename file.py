@@ -208,7 +208,7 @@ class File:
 
             returncode = 0
             # Don't run convert command if file is converted manually
-            if (not os.path.exists(dest_path) or os.path.getsize(dest_path) == self.size):
+            if (not os.path.isfile(dest_path) or os.path.getsize(dest_path) == self.size):
 
                 returncode, out, err = run_shell_cmd(cmd, cwd=self._pwconv_path,
                                                      shell=True, timeout=timeout)
