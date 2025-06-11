@@ -242,11 +242,11 @@ text/calendar:
 text/css:
   command: python3 -m bin.text2utf8 <source> <dest>
   accept:
-    encoding: [utf-8, us-ascii]
+    encoding: [utf-8, ascii, us-ascii]
 text/csv:
   command: python3 -m bin.text2utf8 <source> <dest>
   accept:
-    encoding: [utf-8, us-ascii]
+    encoding: [utf-8, ascii, us-ascii]
 text/html:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
   dest-ext: pdf
@@ -254,13 +254,13 @@ text/markdown:
   command: python3 -m bin.text2utf8 <source> <dest>
   dest-ext: md
   accept:
-    encoding: [utf-8, us-ascii]
+    encoding: [utf-8, ascii, us-ascii]
 text/x-msdos-batch:
   accept: true
 text/plain:
   command: python3 -m bin.text2utf8 <source> <dest>
   accept:
-    encoding: [ascii, utf-8, us-ascii]
+    encoding: [utf-8, ascii, us-ascii]
 text/rtf:
   # The file command identifies rtf as text/rtf.
   # The file command also identifies illegal rtf files which Siegfried doesn't
