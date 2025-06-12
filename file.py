@@ -314,8 +314,10 @@ class File:
             }
             new_file = File(row, self._pwconv_path, True)
             new_file.set_metadata(str(dest_path), dest_dir)
+            mime = new_file.mime
+            conv = converters[mime] if mime in converters else {}
 
-            if self.status == 'renamed':
+            if self.status == 'renamed' or conv.get('keep'):
                 return new_file
 
             # If the file is converted again with the same extension,

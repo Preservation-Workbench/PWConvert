@@ -74,13 +74,11 @@ application/vnd.microsoft.portable-executable:
   keep: false
 application/vnd.ms-excel:
   # Excel files are accepted by Library of Congress
-  command: unoconvert --convert-to pdf --filter-option SinglePageSheets=true --filter-option SelectPdfVersion=2 <source> <dest>
-  dest-ext: pdf
-  keep: true
+  command: unoconvert --convert-to xlsx <source> <dest>
+  dest-ext: xlsx
 application/vnd.ms-excel.sheet.macroEnabled.12:
-  command: unoconvert --convert-to pdf --filter-option SinglePageSheets=true --filter-option SelectPdfVersion=2 <source> <dest>
-  dest-ext: pdf
-  keep: true
+  command: unoconvert --convert-to xlsx <source> <dest>
+  dest-ext: xlsx
 application/vnd.ms-outlook:
   # Library of Congress has no preferred format, but accepts both .msg and .pst
   accept: true
