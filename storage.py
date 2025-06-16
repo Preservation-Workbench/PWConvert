@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import pymysql
-import datetime
 from sqlite3 import Connection
 from typing import Optional
 
@@ -131,6 +130,7 @@ class Storage:
         appenddb(table, self._conn, "file")
 
     def update_row(self, data: dict):
+        del data['norm']
         id = data['id']
         sql = 'UPDATE file SET {}'.format(', '.join('{}=?'.format(k) for k in data
                                                     if k != 'id' and not k.startswith('_')))
@@ -153,9 +153,7 @@ class Storage:
         cursor = self._conn.cursor()
         cursor.execute(sql, tuple(v for k, v in data.items()
                                   if k != 'id' and not k.startswith('_')))
-        # This gets commmited when `update_row` is called
-        # Got 'unable to open database file' when calling this
-        # and `update_row` rigth after in convert.py
+        self._conn.commit()
 
     def delete_row(self, data: dict):
         sql = "delete from file where id = ?"
@@ -319,6 +317,26 @@ class Storage:
 
         return fromdb(self._conn, select, params)
 
+    def get_all(self, conds, params):
+        select = "SELECT * from file"
+
+        if len(conds):
+            select += " WHERE " + ' AND '.join(conds)
+
+        if self.system == 'mysql':
+            select = select.replace('?', '%s')
+
+        cursor = self._conn.cursor()
+        rows = cursor.execute(select, params).fetchall()
+
+        recs = []
+        for row in rows:
+            cols = [col[0] for col in cursor.description]
+            rec = dict(zip(cols, row))
+            recs.append(rec)
+
+        return recs
+
     def get_failed_rows(self, mime: str = None):
         select = """
             SELECT path FROM file
@@ -389,6 +407,19 @@ class Storage:
         self._conn.commit()
         params.pop(0)
 
+    def get_children(self, id):
+        sql = """
+        select * from file where source_id = ?
+        """
+
+        if self.system == 'mysql':
+            sql = sql.replace('?', '%s')
+
+        cursor = self._conn.cursor()
+        params = [id]
+        cursor.execute(sql, params)
+        return cursor.fetchall()
+
     def get_descendants(self, id):
         sql = """
         with recursive descendant as (
@@ -402,10 +433,26 @@ class Storage:
         where id in (select id from descendant where source_id is not null)
         """
 
+        if self.system == 'mysql':
+            sql = sql.replace('?', '%s')
+
         cursor = self._conn.cursor()
         params = [id]
         cursor.execute(sql, params)
         return cursor.fetchall()
+
+    def delete_children(self, id):
+        sql = """
+        delete from file where source_id = ?
+        """
+
+        if self.system == 'mysql':
+            sql = sql.replace('?', '%s')
+
+        params = [id]
+        cursor = self._conn.cursor()
+        cursor.execute(sql, params)
+        self._conn.commit()
 
     def delete_descendants(self, id):
         sql = """

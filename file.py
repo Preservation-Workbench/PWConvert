@@ -10,12 +10,18 @@ from typing import Any, Type, Dict
 from shlex import quote
 import time
 import mimetypes
+import datetime
+from rich.console import Console
 
 import magic
 import chardet
 
+from storage import Storage
 from config import cfg, converters
 from util import run_shell_cmd
+
+console = Console()
+pwconv_path = Path(__file__).parent.resolve()
 
 
 class File:
@@ -24,10 +30,8 @@ class File:
     def __init__(
         self,
         row: Dict[str, Any],
-        pwconv_path: Path,
         unidentify: bool
     ):
-        self._pwconv_path = pwconv_path
         self.id = row['id']
         self.path = row['path']
         self.encoding = row['encoding']
@@ -42,6 +46,9 @@ class File:
         self._stem = Path(self.path).stem
         self.ext = Path(self.path).suffix
         self.kept = None if unidentify else row['kept']
+
+    def set_progress(self, progress):
+        self._progress = progress
 
     def set_metadata(self, source_path, source_dir):
         if cfg['use_siegfried']:
@@ -124,7 +131,8 @@ class File:
 
     def convert(
         self, source_dir: str, dest_dir: str, orig_ext: bool, debug: bool,
-        set_source_ext: bool, identify_only: bool, keep_originals: bool
+        set_source_ext: bool, identify_only: bool, keep_originals: bool,
+        q=None, count=None
     ) -> dict[str, Type[str]]:
         """
         Convert file to archive format
@@ -134,6 +142,13 @@ class File:
         - False if conversion fails
         - None if file isn't converted
         """
+
+        if hasattr(self, '_progress'):
+            count['finished'].value += 1
+            self._count = count
+            print(end='\x1b[2K')  # clear line
+            print(f"\r{self._progress} | "
+                  f"{self.path[0:100]}", end=" ", flush=True)
 
         if self.source_id:
             source_path = os.path.join(dest_dir, self.path)
@@ -210,7 +225,7 @@ class File:
             # Don't run convert command if file is converted manually
             if (not os.path.isfile(dest_path) or os.path.getsize(dest_path) == self.size):
 
-                returncode, out, err = run_shell_cmd(cmd, cwd=self._pwconv_path,
+                returncode, out, err = run_shell_cmd(cmd, cwd=pwconv_path,
                                                      shell=True, timeout=timeout)
 
             if returncode or not os.path.exists(dest_path):
@@ -250,6 +265,8 @@ class File:
                 norm_path = relpath(dest_path, start=dest_dir)
                 if 'keep' in converter and converter['keep'] is True:
                     self.kept = True
+                else:
+                    self.kept = False
 
             if os.path.isfile(temp_path):
                 os.remove(temp_path)
@@ -271,7 +288,8 @@ class File:
             if not self.ext or (
                 mime is not None and mime != self.mime and
                 self.ext != mime_ext and
-                self.mime != 'application/octet-stream'
+                self.mime != 'application/octet-stream' and
+                self.status not in ['skipped', 'failed', 'timeout']
             ):
                 self.status = 'renamed'
                 self.kept = None
@@ -301,7 +319,28 @@ class File:
                 copy_path.unlink()
 
             if os.path.isdir(dest_path):
-                return norm_path
+                files = [relpath(os.path.join(dirpath, f), start=dest_dir)
+                         for (dirpath, dirnames, filenames)
+                         in os.walk(dest_path) for f in filenames]
+                for file_path in files:
+                    row = {
+                        'id': None,
+                        'path': file_path,
+                        'encoding': None,
+                        'status': 'new',
+                        'size': None,
+                        'source_id': self.source_id or self.id,
+                        'kept': False
+                    }
+                    file = File(row, True)
+                    file.norm = file.convert(source_dir, dest_dir, orig_ext,
+                                             debug, set_source_ext, identify_only,
+                                             keep_originals, q)
+
+                if q:
+                    self.norm = None
+                    q.put(self)
+                return
 
             row = {
                 'id': None,
@@ -309,21 +348,20 @@ class File:
                 'encoding': None,
                 'status': 'new',
                 'size': None,
-                'source_id': self.id or self.source_id,
+                'source_id': self.source_id or self.id,
                 'kept': False
             }
-            new_file = File(row, self._pwconv_path, True)
+            new_file = File(row, True)
             new_file.set_metadata(str(dest_path), dest_dir)
             mime = new_file.mime
-            conv = converters[mime] if mime in converters else {}
-
-            if self.status == 'renamed' or conv.get('keep'):
-                return new_file
 
             # If the file is converted again with the same extension,
             # we should accept it. This happens when a pdf can't be
             # converted to pdf/a. Ghostscript writes an ordinary pdf
-            if self.id is None and new_file.format == self.format:
+            if (
+                self.id is None and new_file.format == self.format and
+                new_file.encoding == self.encoding
+            ):
                 new_file.status = 'failed'
                 new_file.kept = True
                 norm_file = False
@@ -331,8 +369,38 @@ class File:
                 norm_file = new_file.convert(source_dir, dest_dir, orig_ext,
                                              debug, set_source_ext, identify_only,
                                              keep_originals)
-
-            return norm_file if norm_file else new_file
+            if q:
+                if new_file.kept:
+                    self.norm = new_file
+                    q.put(self)
+                if norm_file:
+                    self.norm = norm_file
+                    q.put(self)
+            return norm_file or new_file
 
         else:
+            if q:
+                self.norm = False
+                q.put(self)
             return False
+
+    def log(self, db):
+        with Storage(db) as store:
+            if self.norm is None:  # --identify-only
+                pass
+            elif self.norm is False:  # conversion failed
+                if self.status != 'accepted':
+                    pass
+                    # print(end='\x1b[2K')  # clear line
+                    # console.print('  ' + self.status, style="bold red")
+                    # print('test')
+            else:
+                if self.norm.status == 'failed' and self.norm.kept is True:
+                    console.print('converted file kept', style="bold orange1")
+                if self.norm.status != 'new':
+                    self.norm.status_ts = datetime.datetime.now()
+                store.add_row(self.norm.__dict__)
+
+            self.status_ts = datetime.datetime.now()
+            if self.id:
+                store.update_row(self.__dict__)

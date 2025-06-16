@@ -7,7 +7,13 @@ import signal
 import zipfile
 import psutil
 import time
+from pathlib import Path
+import petl as etl
 from config import cfg
+from storage import Storage
+
+
+pwconv_path = Path(__file__).parent.parent.resolve()
 
 
 def run_shell_cmd(command, cwd=None, timeout=None,
@@ -50,13 +56,51 @@ def run_shell_cmd(command, cwd=None, timeout=None,
     return proc.returncode, out, err
 
 
-def make_filelist(source_dir: str, path: str) -> None:
-    os.chdir(source_dir)
+def make_filelist(dir: str) -> None:
+    os.chdir(dir)
+    path = dir.rstrip('/') + '-filelist.txt'
     cmd = 'find -type f -not -path "./.*" | cut -c 3- > "' + path + '"'
     subprocess.run(cmd,
                    stderr=subprocess.DEVNULL,
                    stdout=subprocess.DEVNULL,
                    shell=True)
+
+
+def filelist_to_storage(dir: str,  store: Storage) -> int:
+
+    path = dir.rstrip('/') + '-filelist.txt'
+    table = etl.fromtext(path, header=['filename'], strip="\n")
+    table = etl.rename(
+        table,
+        {
+            'filename': 'path',
+            'filesize': 'size',
+            'Content_Type': 'mime',
+            'Version': 'version',
+        },
+        strict=False,
+    )
+    table = etl.select(table, lambda rec: rec.path != "")
+    table = add_fields(table, 'mime', 'version', 'status', 'puid', 'source_id')
+    # Remove Siegfried generated columns
+    table = remove_fields(table, "namespace", "basis", "warning")
+
+    table = etl.update(table, 'status', "new")
+
+    # Treat csv (detected from extension only) as plain text:
+    table = etl.convert(table, "mime", lambda v,
+                        _row: "text/plain" if _row.id == "x-fmt/18" else v,
+                        pass_row=True)
+
+    # Update for missing mime types where id is known:
+    table = etl.convert(table, "mime", lambda v,
+                        _row: "application/xml" if _row.id == "fmt/979" else v,
+                        pass_row=True)
+
+    store.append_rows(table)
+    row_count = etl.nrows(table)
+    os.remove(path)
+    return row_count
 
 
 def remove_file(src_path: str) -> None:
@@ -114,3 +158,20 @@ def uno_server_running():
             return True
 
     return False
+
+
+def remove_fields(table, *args):
+    """Remove fields from petl table"""
+    for field in args:
+        if field in etl.fieldnames(table):
+            table = etl.cutout(table, field)
+    return table
+
+
+def add_fields(table, *args):
+    """Add fields to petl table"""
+    for field in args:
+        if field not in etl.fieldnames(table):
+            table = etl.addfield(table, field, None)
+    return table
+
