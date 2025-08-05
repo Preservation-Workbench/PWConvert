@@ -74,18 +74,6 @@ class File:
             blob = open(source_path, 'rb').read()
             self.encoding = chardet.detect(blob)['encoding']
 
-        extensions = mimetypes.guess_all_extensions(self.mime, strict=False)
-        if (
-            extensions and self.ext and self.ext.lower() not in extensions and
-            self.mime not in [
-                'application/octet-stream',
-                'application/xml'
-                'text/plain'
-            ]
-        ):
-            self._stem = self._stem + self.ext
-            self.ext = None
-
     def get_dest_ext(self, converter, dest_path, orig_ext):
         if 'dest-ext' not in converter:
             dest_ext = self.ext
@@ -157,6 +145,17 @@ class File:
 
         if self.mime in ['', 'None', None]:
             self.set_metadata(source_path, source_dir)
+
+        mimetype_ext, _ = mimetypes.guess_type(self.path)
+        if (
+            self.ext and mimetype_ext is None and self.mime not in [
+                'application/octet-stream',
+                'application/xml'
+                'text/plain'
+            ]
+        ):
+            self._stem = self._stem + self.ext
+            self.ext = None
 
         converter = converters[self.mime] if self.mime in converters else {}
 
