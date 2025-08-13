@@ -79,10 +79,6 @@ def convert(
         default=False,
         help="Add or change extension on source files based on mimetype"
     ),
-    multi: bool = typer.Option(
-        default=False,
-        help="Use multiprocessing to convert each subfolder in its own process"
-    ),
     retry: bool = typer.Option(
         default=False,
         help="Try to convert files where conversion previously failed"
