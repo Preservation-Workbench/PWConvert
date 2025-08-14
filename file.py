@@ -179,6 +179,9 @@ class File:
             source_path = os.path.join(source_dir, self.path)
 
         if identify_only:
+            if q:
+                self.norm = False
+                q.put(self)
             return None
 
         # Set converter for special puid or source-ext defined for the mime type
