@@ -283,6 +283,9 @@ class File:
             self.status = 'skipped'
             self.kept = True
 
+        if keep_originals and self.source_id is None:
+            self.kept = True
+
         # Copy file from `source_dir` if it's an original file and
         # it should be kept, accepted or if conversion failed
         copy_path = Path(dest_dir, self.path)
