@@ -147,9 +147,13 @@ class File:
         if self.mime in ['', 'None', None]:
             self.set_metadata(source_path, source_dir)
 
-        mimetype_ext, _ = mimetypes.guess_type(self.path)
+        # Make extension part of stem if it's not a known extension
+        # This catches files without extension but with dot in file name
+        mime_from_ext, _ = mimetypes.guess_type(self.path)
+        ext_from_mime = mimetypes.guess_extension(self.mime)
         if (
-            self.ext and mimetype_ext is None and self.mime not in [
+            self.ext and mime_from_ext is None and ext_from_mime is not None
+            and self.mime not in [
                 'application/octet-stream',
                 'application/xml'
                 'text/plain'
