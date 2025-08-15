@@ -212,7 +212,8 @@ class File:
             from_path = source_path
 
             dest_ext = self.get_dest_ext(converter, dest_path, orig_ext)
-            dest_path = dest_path + dest_ext
+            if dest_ext:
+                dest_path = dest_path + dest_ext
 
             if from_path.lower() == dest_path.lower():
                 os.makedirs(os.path.dirname(temp_path), exist_ok=True)
