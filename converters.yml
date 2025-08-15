@@ -180,6 +180,9 @@ image/emf:
   dest-ext: png
 image/gif:
   accept: true
+image/heic:
+  command: convert <source> <dest>
+  dest-ext: png
 image/heif:
   command: convert <source> <dest>
   dest-ext: png
