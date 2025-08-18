@@ -14,7 +14,6 @@ import datetime
 from rich.console import Console
 
 import magic
-import chardet
 
 from storage import Storage
 from config import cfg, converters
@@ -67,13 +66,20 @@ class File:
                 self.puid = fileinfo['files'][0]['matches'][0]['id']
 
         if self.mime in ['', 'None', None]:
-            self.mime = magic.from_file(source_path, mime=True)
+            cmd = ['file', '-i', '-b', source_path]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            fileinfo = result.stdout
+            self.mime = fileinfo.split(';')[0]
+            self.encoding = fileinfo.split(';')[1].replace('charset=', '').strip()
             self.format = magic.from_file(source_path).split(',')[0]
             self.size = os.path.getsize(source_path)
 
-        if self.mime.startswith('text/'):
-            blob = open(source_path, 'rb').read()
-            self.encoding = chardet.detect(blob)['encoding']
+        if not self.encoding and (
+            self.mime.startswith('text/') or self.mime == 'application/json'
+        ):
+            cmd = ['file', '-i', '-b', source_path]
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            self.encoding = result.stdout.split(';')[1].replace('charset=', '').strip()
 
     def get_dest_ext(self, converter, dest_path, orig_ext):
         if 'dest-ext' not in converter:

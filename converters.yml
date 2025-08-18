@@ -39,6 +39,8 @@ application/javascript:
   accept: true
 application/json:
   command: python3 -m bin.text2utf8 <source> <dest>
+  accept:
+    encoding: [utf-8, ascii, us-ascii]
 application/mp4:
   acccept: true
 application/msword:
