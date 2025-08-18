@@ -412,8 +412,6 @@ class File:
                     # console.print('  ' + self.status, style="bold red")
                     # print('test')
             else:
-                if self.norm.status == 'failed' and self.norm.kept is True:
-                    console.print('converted file kept', style="bold orange1")
                 if self.norm.status != 'new':
                     self.norm.status_ts = datetime.datetime.now()
                 store.add_row(self.norm.__dict__)
