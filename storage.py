@@ -307,6 +307,8 @@ class Storage:
         if len(conds):
             select += " WHERE " + ' AND '.join(conds)
 
+        select += 'ORDER BY path'
+
         # Since the selection is run for every file, limit the result.
         # If not the query takes too long on MySQL for large number of files
         if limit:
