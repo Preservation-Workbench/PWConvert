@@ -70,6 +70,9 @@ class File:
             result = subprocess.run(cmd, capture_output=True, text=True)
             fileinfo = result.stdout
             self.mime = fileinfo.split(';')[0]
+            # file command uses wrong mimetype in older versions
+            if self.mime == 'application/csv':
+                self.mime = 'text/csv'
             self.encoding = fileinfo.split(';')[1].replace('charset=', '').strip()
             self.format = magic.from_file(source_path).split(',')[0]
             self.size = os.path.getsize(source_path)
