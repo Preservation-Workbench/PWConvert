@@ -42,7 +42,7 @@ application/json:
   accept:
     encoding: [utf-8, ascii, us-ascii]
 application/mp4:
-  acccept: true
+  accept: true
 application/msword:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
   dest-ext: pdf
@@ -160,6 +160,8 @@ audio/3gpp:
   command: vlc -I dummy <source> --sout=#std{access=file,mux=mp4,dst=<dest>} vlc://quit
   dest-ext: mp4
 audio/aac:
+  accept: true
+audio/mp4:
   accept: true
 audio/mpeg:
   accept: true
@@ -281,6 +283,8 @@ text/xml:
 video/MP2T:
   command: vlc -I dummy <source> --sout=#std{access=file,mux=mp4,dst=<dest>} vlc://quit
   dest-ext: mp4
+video/mp4:
+  accept: true
 video/mpeg:
   command: vlc -I dummy <source> --sout=#std{access=file,mux=mp4,dst=<dest>} vlc://quit
   dest-ext: mp4
