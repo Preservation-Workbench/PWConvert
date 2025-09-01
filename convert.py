@@ -24,6 +24,7 @@ import textwrap
 import psutil
 from pathlib import Path
 from multiprocessing import Pool, Manager
+from math import ceil
 import typer
 
 from rich.console import Console
@@ -86,6 +87,10 @@ def convert(
     keep_originals: bool = typer.Option(
         default=cfg['keep-original-files'],
         help="Keep original files"
+    ),
+    distribute: bool = typer.Option(
+        default=False,
+        help="Distribute files to subfolders with 1000 files in each"
     )
 ) -> None:
     """
@@ -180,10 +185,26 @@ def convert(
         pool.apply_async(listener, (q, db))
 
         n = 0
+        i = 0
+        subfolder = ''
+        parent = ''
+        num_files = 0
         for row in etl.dicts(table):
             n += 1
             file = File(row, identify_only)
             file.set_progress(f"{n}/{total_count}")
+
+            if not file.source_id and file._parent != parent:
+                i = 0
+                parent = file._parent
+                dir = os.path.join(source, parent)
+                num_files = len(os.listdir(dir))
+            i += 1
+
+            if num_files > 2000 and distribute:
+                subfolder = str(ceil(i/1000))
+            else:
+                subfolder = ''
 
             if reconvert and row['source_id'] is None:
                 # Remove any copied original files
@@ -195,7 +216,7 @@ def convert(
                 q.put(row['id'])
 
             args = (source, dest, orig_ext, debug, set_source_ext,
-                    identify_only, keep_originals, q, count)
+                    identify_only, keep_originals, q, count, subfolder)
             job = pool.apply_async(file.convert, args=args,
                                    error_callback=handle_error)
             jobs.append(job)

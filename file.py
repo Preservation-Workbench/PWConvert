@@ -127,7 +127,7 @@ class File:
     def convert(
         self, source_dir: str, dest_dir: str, orig_ext: bool, debug: bool,
         set_source_ext: bool, identify_only: bool, keep_originals: bool,
-        q=None, count=None
+        q=None, count=None, subfolder=''
     ) -> dict[str, Type[str]]:
         """
         Convert file to archive format
@@ -202,7 +202,7 @@ class File:
 
         accept = self.is_accepted(converter)
 
-        dest_path = os.path.join(dest_dir, self._parent, self._stem)
+        dest_path = os.path.join(dest_dir, self._parent, subfolder, self._stem)
         temp_path = os.path.join('/tmp/convert',  self.path)
         dest_path = os.path.abspath(dest_path)
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
@@ -302,7 +302,7 @@ class File:
         copy_path = Path(dest_dir, self.path)
         if self.kept and self.source_id is None:
             mime, encoding = mimetypes.guess_type(self.path)
-            if not self.ext or (
+            if not self.ext or subfolder or (
                 mime is not None and mime != self.mime and
                 self.ext != mime_ext and
                 self.mime != 'application/octet-stream' and
@@ -311,7 +311,7 @@ class File:
                 self.status = 'renamed'
                 self.kept = None
                 dest_name = self._stem + ('' if not mime_ext else mime_ext)
-                copy_path = Path(dest_dir, self._parent, dest_name)
+                copy_path = Path(dest_dir, self._parent, subfolder, dest_name)
                 norm_path = relpath(copy_path, start=dest_dir)
             if source_dir != dest_dir:
                 try:
