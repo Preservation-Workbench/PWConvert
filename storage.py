@@ -253,6 +253,8 @@ class Storage:
             params.append('accepted')
             params.append('removed')
             params.append('renamed')
+        elif finished:
+            conds.append('status_ts is not null')
 
         if reconvert:
             conds.append('source_id is null')

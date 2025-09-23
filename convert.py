@@ -187,7 +187,7 @@ def convert(
         n = 0
         i = 0
         subfolder = ''
-        parent = ''
+        parent = None
         num_files = 0
         for row in etl.dicts(table):
             n += 1
@@ -195,7 +195,12 @@ def convert(
             file.set_progress(f"{n}/{total_count}")
 
             if not file.source_id and file._parent != parent:
-                i = 0
+                subpath = None
+                if str(file._parent) != '.':
+                    subpath = str(file._parent) + '/'
+                conds, params = store.get_conds(finished=True, original=True,
+                                                subpath=subpath)
+                i = store.get_row_count(conds, params)
                 parent = file._parent
                 dir = os.path.join(source, parent)
                 num_files = len(os.listdir(dir))
