@@ -88,9 +88,9 @@ def convert(
         default=cfg['keep-original-files'],
         help="Keep original files"
     ),
-    distribute: bool = typer.Option(
-        default=False,
-        help="Distribute files to subfolders with 1000 files in each"
+    distribute: int = typer.Option(
+        default=None,
+        help="Distribute files to subfolders with specified number of files in each"
     )
 ) -> None:
     """
@@ -201,8 +201,8 @@ def convert(
                 num_files = len(os.listdir(dir))
             i += 1
 
-            if num_files > 2000 and distribute:
-                subfolder = str(ceil(i/1000))
+            if distribute and num_files > (2 * distribute):
+                subfolder = str(ceil(i/distribute))
             else:
                 subfolder = ''
 
