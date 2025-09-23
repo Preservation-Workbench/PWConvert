@@ -242,29 +242,31 @@ def convert(
             console.print('\nConversion finished in ' + duration)
         conds, params = store.get_conds(finished=True, status='accepted',
                                         timestamp=ts)
-        count_accepted = store.get_row_count(conds, params)
-        if count_accepted:
-            console.print(f"{count_accepted} files accepted",
-                          style="bold green")
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files accepted", style="bold green")
         conds, params = store.get_conds(finished=True, status='skipped',
                                         timestamp=ts)
-        count_skipped = store.get_row_count(conds, params)
-        if count_skipped:
-            console.print(f"{count_skipped} files skipped",
-                          style="bold orange1")
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files skipped", style="bold orange1")
         conds, params = store.get_conds(finished=True, status='removed',
                                         timestamp=ts)
-        count_removed = store.get_row_count(conds, params)
-        if count_removed:
-            console.print(f"{count_removed} files removed",
-                          style="bold orange1")
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files removed", style="bold orange1")
 
         conds, params = store.get_conds(finished=True, status='failed',
                                         timestamp=ts)
-        count_failed = store.get_row_count(conds, params)
-        if count_failed:
-            console.print(f"{count_failed} files failed",
-                          style="bold red")
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files failed", style="bold red")
+
+        conds, params = store.get_conds(finished=True, status='unconverted',
+                                        timestamp=ts)
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files unconverted", style="bold orange1")
         console.print(f"See database {db} for details")
 
 

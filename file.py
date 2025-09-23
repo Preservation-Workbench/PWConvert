@@ -277,6 +277,10 @@ class File:
 
                 norm_path = False
                 self.kept = True
+            elif os.path.getsize(dest_path) == 0:
+                self.status = 'unconverted'
+                self.kept = converter.get('keep', False)
+                os.remove(dest_path)
             else:
                 self.status = 'converted'
                 norm_path = relpath(dest_path, start=dest_dir)
@@ -373,6 +377,8 @@ class File:
             }
             new_file = File(row, True)
             new_file.set_metadata(str(dest_path), dest_dir)
+            # Fix wrong mime type, e.g plain text recognized as html 
+            new_file.mime, _ = mimetypes.guess_type(str(dest_path))
             mime = new_file.mime
 
             # If the file is converted again with the same extension,
