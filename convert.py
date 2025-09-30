@@ -90,7 +90,11 @@ def convert(
     ),
     distribute: int = typer.Option(
         default=None,
-        help="Distribute files to subfolders with specified number of files in each"
+        help="""
+            EXPERIMENTAL: Distribute files to subfolders with specified
+            number of files in each. NOTE: Only distributes files directly
+            under the source folder
+            """
     )
 ) -> None:
     """
@@ -185,28 +189,20 @@ def convert(
         pool.apply_async(listener, (q, db))
 
         n = 0
-        i = 0
+        conds, params = store.get_conds(finished=True, original=True)
+        i = store.get_row_count(conds, params)
         subfolder = ''
-        parent = None
-        num_files = 0
+        num_files = len(os.listdir(source))
+        last_folder = '.'
         for row in etl.dicts(table):
             n += 1
             file = File(row, identify_only)
             file.set_progress(f"{n}/{total_count}")
 
-            if not file.source_id and file._parent != parent:
-                subpath = None
-                if str(file._parent) != '.':
-                    subpath = str(file._parent) + '/'
-                conds, params = store.get_conds(finished=True, original=True,
-                                                subpath=subpath)
-                with Storage(db) as store2:
-                    i = store2.get_row_count(conds, params)
-                parent = file._parent
-                dir = os.path.join(source, parent)
-                num_files = len(os.listdir(dir))
-
-            i += 1
+            folder = str(file._parent).split(os.sep)[0]
+            if folder == '.' or folder != last_folder:
+                i += 1
+                last_folder = folder
 
             if distribute and num_files > (2 * distribute):
                 subfolder = str(ceil(i/distribute))

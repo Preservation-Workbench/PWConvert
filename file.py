@@ -205,7 +205,7 @@ class File:
 
         accept = self.is_accepted(converter)
 
-        dest_path = os.path.join(dest_dir, self._parent, subfolder, self._stem)
+        dest_path = os.path.join(dest_dir, subfolder, self._parent, self._stem)
         temp_path = os.path.join('/tmp/convert',  self.path)
         dest_path = os.path.abspath(dest_path)
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
@@ -318,7 +318,7 @@ class File:
                 self.status = 'renamed'
                 self.kept = None
                 dest_name = self._stem + (self.ext if not mime_ext else mime_ext)
-                copy_path = Path(dest_dir, self._parent, subfolder, dest_name)
+                copy_path = Path(dest_dir, subfolder, self._parent, dest_name)
                 norm_path = relpath(copy_path, start=dest_dir)
             if source_dir != dest_dir:
                 try:
