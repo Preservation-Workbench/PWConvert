@@ -317,7 +317,7 @@ class File:
             ):
                 self.status = 'renamed'
                 self.kept = None
-                dest_name = self._stem + ('' if not mime_ext else mime_ext)
+                dest_name = self._stem + (self.ext if not mime_ext else mime_ext)
                 copy_path = Path(dest_dir, self._parent, subfolder, dest_name)
                 norm_path = relpath(copy_path, start=dest_dir)
             if source_dir != dest_dir:
