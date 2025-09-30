@@ -146,7 +146,7 @@ class File:
             self._count = count
             print(end='\x1b[2K')  # clear line
             print(f"\r{self._progress} | "
-                  f"{self.path[0:100]}", end=" ", flush=True)
+                  f"{self.path[0:60]}", end=" ", flush=True)
 
         if self.source_id:
             source_path = os.path.join(dest_dir, self.path)
