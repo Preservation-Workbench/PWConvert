@@ -138,6 +138,8 @@ class Storage:
             sql = sql.replace('?', '%s')
         sql += ' WHERE id = ' + str(id)
         cursor = self._conn.cursor()
+        if self.system == 'sqlite':
+            cursor.execute('PRAGMA journal_mode=wal')
         cursor.execute(sql, tuple(v for k, v in data.items()
                                   if k != 'id' and not k.startswith('_')))
         self._conn.commit()
@@ -151,6 +153,8 @@ class Storage:
             sql = sql.replace('?', '%s')
 
         cursor = self._conn.cursor()
+        if self.system == 'sqlite':
+            cursor.execute('PRAGMA journal_mode=wal')
         cursor.execute(sql, tuple(v for k, v in data.items()
                                   if k != 'id' and not k.startswith('_')))
         self._conn.commit()
@@ -193,6 +197,8 @@ class Storage:
 
     def get_row_count(self, conds=[], params=[]):
         cursor = self._conn.cursor()
+        if self.system == 'sqlite':
+            cursor.execute('PRAGMA journal_mode=wal')
         query = "SELECT COUNT(*) FROM file"
 
         if len(conds):
@@ -420,6 +426,8 @@ class Storage:
             sql = sql.replace('?', '%s')
 
         cursor = self._conn.cursor()
+        if self.system == 'sqlite':
+            cursor.execute('PRAGMA journal_mode=wal')
         params = [id]
         cursor.execute(sql, params)
         return cursor.fetchall()

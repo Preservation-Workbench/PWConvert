@@ -200,10 +200,12 @@ def convert(
                     subpath = str(file._parent) + '/'
                 conds, params = store.get_conds(finished=True, original=True,
                                                 subpath=subpath)
-                i = store.get_row_count(conds, params)
+                with Storage(db) as store2:
+                    i = store2.get_row_count(conds, params)
                 parent = file._parent
                 dir = os.path.join(source, parent)
                 num_files = len(os.listdir(dir))
+
             i += 1
 
             if distribute and num_files > (2 * distribute):
