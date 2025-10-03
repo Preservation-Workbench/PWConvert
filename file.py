@@ -85,9 +85,11 @@ class File:
             self.encoding = result.stdout.split(';')[1].replace('charset=', '').strip()
 
     def get_dest_ext(self, converter, dest_path, orig_ext):
-        if 'dest-ext' not in converter:
+        dest_ext = None
+        # keep extension for text files converted to utf8
+        if 'dest-ext' not in converter and self.mime.startswith('text/'):
             dest_ext = self.ext
-        else:
+        elif 'dest-ext' in converter:
             dest_ext = ('' if converter['dest-ext'] is None
                         else '.' + converter['dest-ext'].strip('.'))
 
@@ -377,9 +379,15 @@ class File:
             }
             new_file = File(row, True)
             new_file.set_metadata(str(dest_path), dest_dir)
-            # Fix wrong mime type, e.g plain text recognized as html 
-            new_file.mime, _ = mimetypes.guess_type(str(dest_path))
+            # Fix wrong mime type, e.g plain text recognized as html
+            if new_file.ext:
+                new_file.mime, _ = mimetypes.guess_type(str(dest_path))
             mime = new_file.mime
+            # Set extension if no `dest_ext` in converter
+            if new_file.ext == '':
+                new_file.ext = mimetypes.guess_extension(mime)
+                new_file.path = new_file.path + new_file.ext
+                shutil.move(Path(dest_dir, norm_path), Path(dest_dir, new_file.path))
 
             # If the file is converted again with the same extension,
             # we should accept it. This happens when a pdf can't be
