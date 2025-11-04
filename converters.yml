@@ -151,6 +151,10 @@ application/xhtml+xml:
 application/zip:
   command: unar -k skip -D <source> -o <dest>
   dest-ext: null
+  source-ext:
+    .docx:
+      command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
+      dest-ext: pdf
   puid:
     fmt1441: # iWork files
       # iWork files have a preview file, so we remove other data
