@@ -266,7 +266,8 @@ class Storage:
             conds.append('source_id is null')
 
         if not retry and not reconvert and not finished:
-            conds.append('status_ts is null')
+            conds.append('(status_ts is null or status = ?)')
+            params.append('new')
 
         if mime:
             conds.append("mime = ?")
