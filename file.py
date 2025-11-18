@@ -150,7 +150,7 @@ class File:
             print(f"\r{self._progress} | "
                   f"{self.path[0:60]}", end=" ", flush=True)
 
-        if self.source_id:
+        if self.source_id and os.path.isfile(os.path.join(dest_dir, self.path)):
             source_path = os.path.join(dest_dir, self.path)
         else:
             source_path = os.path.join(source_dir, self.path)
@@ -309,7 +309,7 @@ class File:
         # Copy file from `source_dir` if it's an original file and
         # it should be kept, accepted or if conversion failed
         copy_path = Path(dest_dir, self.path)
-        if self.kept and self.source_id is None:
+        if self.kept:
             mime, encoding = mimetypes.guess_type(self.path)
             if not self.ext or subfolder or (
                 mime is not None and mime != self.mime and
@@ -322,9 +322,9 @@ class File:
                 dest_name = self._stem + (self.ext if not mime_ext else mime_ext)
                 copy_path = Path(dest_dir, subfolder, self._parent, dest_name)
                 norm_path = relpath(copy_path, start=dest_dir)
-            if source_dir != dest_dir:
+            if (self.source_id is None and source_dir != dest_dir) or self.status == 'renamed':
                 try:
-                    shutil.copyfile(Path(source_dir, self.path), copy_path)
+                    shutil.copyfile(source_path, copy_path)
                 except Exception as e:
                     frame = getframeinfo(currentframe())
                     filename = frame.filename

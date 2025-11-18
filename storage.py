@@ -3,6 +3,7 @@ import sqlite3
 import pymysql
 from sqlite3 import Connection
 from typing import Optional
+from pathlib import Path
 
 import petl
 from petl import appenddb, fromdb, todb
@@ -102,6 +103,7 @@ class Storage:
             if self.system == 'sqlite':
                 sql = sql.replace('auto_increment', '')
             cursor.execute(sql)
+            cursor.execute("CREATE INDEX file_path on file(path)")
             cursor.execute("CREATE INDEX file_status on file(status)")
             cursor.execute("CREATE INDEX file_status_ts on file(status_ts)")
             cursor.execute(self._create_view_file_root)
@@ -129,8 +131,28 @@ class Storage:
         # append new rows
         appenddb(table, self._conn, "file")
 
+    def get_kept_rec(self, path):
+        sql = "select * from file where path = ? and (kept = 1 or status = 'new')"
+        cursor = self._conn.cursor()
+        cursor.execute(sql, (path,))
+        row = cursor.fetchone()
+        if row is None:
+            stem = Path(path).stem
+            parent = Path(path).parent
+            path_without_ext = os.path.join(parent, stem)
+            sql = "select * from file where path = ? || ext"
+            cursor.execute(sql, (path_without_ext,))
+            row = cursor.fetchone()
+        if not row:
+            return None
+        cols = [col[0] for col in cursor.description]
+        rec = dict(zip(cols, row))
+
+        return rec
+
     def update_row(self, data: dict):
-        del data['norm']
+        if 'norm' in data:
+            del data['norm']
         id = data['id']
         sql = 'UPDATE file SET {}'.format(', '.join('{}=?'.format(k) for k in data
                                                     if k != 'id' and not k.startswith('_')))
