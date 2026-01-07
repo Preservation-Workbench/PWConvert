@@ -9,10 +9,14 @@
 # - <dest-parent> : parent directory of output file
 # - <stem> : file name without extension
 # - <pid> : process id when using multiprocessing
+# - <accept> : `true` if file should be accepted, else `false`
+#
 # Supported attributes:
 # - command: conversion command with placeholders
 # - ext: standard extension for the mime-type
 # - dest-ext: extension of output file
+#   - supports bash command with `echo` to get extension, e.g.:
+#     dest-ext: <accept> && echo 'txt' || echo 'pdf'
 # - source-ext: allows defining special conversion for certain file extensions
 # - puid: allows defining special conversion for certain puid
 # - accept: if the file should be accepted as archive format
@@ -38,7 +42,7 @@ application/gzip:
 application/javascript:
   accept: true
 application/json:
-  command: python3 -m bin.text2utf8 <source> <dest>
+  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
   accept:
     encoding: [utf-8, ascii, us-ascii]
 application/mp4:
@@ -60,7 +64,7 @@ application/postscript:
   command: ps2pdf -dPDFA=2 <source> <dest>
   dest-ext: pdf
 application/pdf:
-  command: pdfcpu validate <source> && bin/pdf2pdfa.sh <source> <dest>
+  command: if ! <accept>; then pdfcpu validate <source> && bin/pdf2pdfa.sh <source> <dest>; fi
   dest-ext: pdf
   timeout: 300
   accept:
@@ -249,25 +253,25 @@ multipart/related:
 text/calendar:
   accept: true
 text/css:
-  command: python3 -m bin.text2utf8 <source> <dest>
+  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/csv:
-  command: python3 -m bin.text2utf8 <source> <dest>
+  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/html:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
   dest-ext: pdf
 text/markdown:
-  command: python3 -m bin.text2utf8 <source> <dest>
+  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
   dest-ext: md
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/x-msdos-batch:
   accept: true
 text/plain:
-  command: python3 -m bin.text2utf8 <source> <dest>
+  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/rtf:

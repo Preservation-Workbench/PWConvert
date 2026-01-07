@@ -84,21 +84,26 @@ class File:
             result = subprocess.run(cmd, capture_output=True, text=True)
             self.encoding = result.stdout.split(';')[1].replace('charset=', '').strip()
 
-    def get_dest_ext(self, converter, dest_path, orig_ext):
+    def get_dest_ext(self, converter, dest_path, orig_ext, accept):
         dest_ext = None
         # keep extension for text files converted to utf8
         if 'dest-ext' not in converter and self.mime.startswith('text/'):
             dest_ext = self.ext
         elif 'dest-ext' in converter:
-            dest_ext = ('' if converter['dest-ext'] is None
-                        else '.' + converter['dest-ext'].strip('.'))
+            if 'echo' in converter['dest-ext']:
+                cmd = converter['dest-ext'].replace("<accept>", str(accept).lower())
+                returncode, out, err = run_shell_cmd(cmd, shell=True)
+                dest_ext = '.' + out.strip()
+            else:
+                dest_ext = ('' if converter['dest-ext'] is None
+                            else '.' + converter['dest-ext'].strip('.'))
 
         if orig_ext and dest_ext != self.ext:
             dest_ext = self.ext + dest_ext
 
         return dest_ext
 
-    def get_conversion_cmd(self, converter, source_path, dest_path, temp_path):
+    def get_conversion_cmd(self, converter, source_path, dest_path, temp_path, accept):
         cmd = converter["command"] if 'command' in converter else None
 
         if cmd:
@@ -114,6 +119,7 @@ class File:
                               quote(str(Path(dest_path).parent)))
             cmd = cmd.replace("<pid>", str(os.getpid()))
             cmd = cmd.replace("<stem>", quote(self._stem))
+            cmd = cmd.replace("<accept>", str(accept).lower())
 
         return cmd
 
@@ -158,6 +164,8 @@ class File:
         if self.mime in ['', 'None', None]:
             self.set_metadata(source_path, source_dir)
 
+        self._mtime = os.path.getmtime(source_path)
+
         # Make extension part of stem if it's not a known extension
         # This catches files without extension but with dot in file name
         mime_from_ext, _ = mimetypes.guess_type(self.path)
@@ -174,6 +182,10 @@ class File:
             self.ext = None
 
         converter = converters[self.mime] if self.mime in converters else {}
+        if 'keep' in converter and converter['keep'] is True:
+            self.kept = True
+        else:
+            self.kept = False
 
         mime_ext = converter.get('ext')
         mime_ext = '.' + mime_ext.lstrip('.') if mime_ext else None
@@ -206,6 +218,9 @@ class File:
             converter.update(converter['source-ext'][self.ext])
 
         accept = self.is_accepted(converter)
+        if accept:
+            self.status = 'accepted'
+            self.kept = True
 
         dest_path = os.path.join(dest_dir, subfolder, self._parent, self._stem)
         temp_path = os.path.join('/tmp/convert',  self.path)
@@ -213,26 +228,20 @@ class File:
         os.makedirs(os.path.dirname(dest_path), exist_ok=True)
         norm_path = None
 
-        if accept:
-            self.status = 'accepted'
-            self.kept = True
-        elif self.mime == 'application/encrypted':
-            self.status = 'protected'
-            self.kept = True
-        elif 'command' in converter and converter['command'] is not None:
+        if 'command' in converter and converter['command'] is not None:
             from_path = source_path
 
-            dest_ext = self.get_dest_ext(converter, dest_path, orig_ext)
+            dest_ext = self.get_dest_ext(converter, dest_path, orig_ext, accept)
             if dest_ext:
                 dest_path = dest_path + dest_ext
 
-            if from_path.lower() == dest_path.lower():
+            if not accept and from_path.lower() == dest_path.lower():
                 os.makedirs(os.path.dirname(temp_path), exist_ok=True)
                 shutil.move(source_path, temp_path)
                 from_path = temp_path
 
             cmd = self.get_conversion_cmd(converter, from_path, dest_path,
-                                          temp_path)
+                                          temp_path, accept)
 
             # Disabled because not in use, and file command doesn't have version
             # with option --mime-type
@@ -261,7 +270,7 @@ class File:
                     self.status = 'protected'
                 elif out == 'timeout':
                     self.status = 'timeout'
-                else:
+                elif not accept:
                     self.status = 'failed'
 
                 if debug:
@@ -280,22 +289,23 @@ class File:
                 norm_path = False
                 self.kept = True
             elif os.path.getsize(dest_path) == 0:
-                self.status = 'unconverted'
-                self.kept = converter.get('keep', False)
+                self.status = 'accepted' if accept else 'unconverted'
                 os.remove(dest_path)
-            else:
-                self.status = 'converted'
+            elif self._mtime != os.path.getmtime(dest_path):
+                if self.status != 'accepted':
+                    self.status = 'converted'
                 norm_path = relpath(dest_path, start=dest_dir)
-                if 'keep' in converter and converter['keep'] is True:
-                    self.kept = True
-                else:
-                    self.kept = False
 
             if os.path.isfile(temp_path):
                 os.remove(temp_path)
             elif os.path.isdir(temp_path):
                 shutil.rmtree(temp_path)
-
+        elif accept:
+            self.status = 'accepted'
+            self.kept = True
+        elif self.mime == 'application/encrypted':
+            self.status = 'protected'
+            self.kept = True
         elif 'keep' in converter and converter['keep'] is False:
             self.status = 'removed'
             self.kept = False
@@ -405,11 +415,12 @@ class File:
                                              keep_originals)
             if q:
                 if new_file.kept:
+                    # Register converted file in database if it should be kept
                     self.norm = new_file
                     q.put(self)
-                if norm_file:
-                    self.norm = norm_file
-                    q.put(self)
+
+                self.norm = norm_file
+                q.put(self)
             return norm_file or new_file
 
         else:

@@ -239,32 +239,32 @@ def convert(
         else:
             console.print('\nConversion finished in ' + duration)
         conds, params = store.get_conds(finished=True, status='accepted',
-                                        timestamp=ts)
+                                        timestamp=ts, original=True)
         count = store.get_row_count(conds, params)
         if count:
             console.print(f"{count} files accepted", style="bold green")
+        conds, params = store.get_conds(finished=True, status='converted',
+                                        timestamp=ts, original=True)
+        count = store.get_row_count(conds, params)
+        if count:
+            console.print(f"{count} files converted", style="bold orange1")
         conds, params = store.get_conds(finished=True, status='skipped',
-                                        timestamp=ts)
+                                        timestamp=ts, original=True)
         count = store.get_row_count(conds, params)
         if count:
             console.print(f"{count} files skipped", style="bold orange1")
         conds, params = store.get_conds(finished=True, status='removed',
-                                        timestamp=ts)
+                                        timestamp=ts, original=True)
         count = store.get_row_count(conds, params)
         if count:
             console.print(f"{count} files removed", style="bold orange1")
 
         conds, params = store.get_conds(finished=True, status='failed',
-                                        timestamp=ts)
+                                        timestamp=ts, original=True)
         count = store.get_row_count(conds, params)
         if count:
             console.print(f"{count} files failed", style="bold red")
 
-        conds, params = store.get_conds(finished=True, status='unconverted',
-                                        timestamp=ts)
-        count = store.get_row_count(conds, params)
-        if count:
-            console.print(f"{count} files unconverted", style="bold orange1")
         console.print(f"See database {db} for details")
 
 
