@@ -45,6 +45,7 @@ class File:
         self._stem = Path(self.path).stem
         self.ext = Path(self.path).suffix
         self.kept = None if unidentify else row['kept']
+        self._content = None
 
     def set_progress(self, progress):
         self._progress = progress
@@ -83,6 +84,11 @@ class File:
             cmd = ['file', '-i', '-b', source_path]
             result = subprocess.run(cmd, capture_output=True, text=True)
             self.encoding = result.stdout.split(';')[1].replace('charset=', '').strip()
+
+        if self.encoding and self.encoding != 'binary' and cfg['get-text']:
+            with open(source_path, 'r', encoding=self.encoding) as file:
+                content = file.read()
+                self._content = ' '.join(content.split())
 
     def get_dest_ext(self, converter, dest_path, orig_ext, accept):
         dest_ext = None
@@ -443,7 +449,11 @@ class File:
                 if self.norm.status != 'new':
                     self.norm.status_ts = datetime.datetime.now()
                 store.add_row(self.norm.__dict__)
+                if self.norm._content:
+                    store.write_content(self.norm.source_id, self.norm._content)
 
             self.status_ts = datetime.datetime.now()
             if self.id:
                 store.update_row(self.__dict__)
+                if self._content:
+                    store.write_content(self.id, self._content)

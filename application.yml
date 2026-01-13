@@ -9,6 +9,12 @@ keep-original-ext: false
   # but there is no real extension:
   # e.g. file.without.extension -> file.without.pdf
 keep-original-files: false
+# Put content of text files into database
+get-text: false
+# EXPERIMENTAL: Use `svn mv <source> <dest>` before conversion
+# to track file conversion in Subversion
+svn-rename: false
+# Show conversion command when conversions fail
 debug: false
 # Use Siegfried to identify file type
 use_siegfried: true

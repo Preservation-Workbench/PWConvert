@@ -29,6 +29,13 @@ class Storage:
     );
     """
 
+    _create_file_content = """
+    CREATE TABLE file_content(
+        file_id integer primary key,
+        content text
+    );
+    """
+
     _create_view_file_root = """
     create view file_root as
     with recursive cte as (
@@ -107,6 +114,7 @@ class Storage:
             cursor.execute("CREATE INDEX file_status on file(status)")
             cursor.execute("CREATE INDEX file_status_ts on file(status_ts)")
             cursor.execute(self._create_view_file_root)
+            cursor.execute(self._create_file_content)
         self._conn.commit()
 
     def close_data_source(self):
@@ -180,6 +188,20 @@ class Storage:
         cursor.execute(sql, tuple(v for k, v in data.items()
                                   if k != 'id' and not k.startswith('_')))
         self._conn.commit()
+
+    def write_content(self, id, content):
+        sql = "select count(*) from file_content where file_id = ?"
+        cursor = self._conn.cursor()
+        cursor.execute(sql, (id,))
+        count = cursor.fetchone()[0]
+        if count == 0:
+            sql = "insert into file_content(file_id, content) values (?, ?)"
+            cursor.execute(sql, (id, content))
+            self._conn.commit()
+        else:
+            sql = "update file_content set content = ? where file_id = ?"
+            cursor.execute(sql, (content, id))
+            self._conn.commit()
 
     def delete_row(self, data: dict):
         sql = "delete from file where id = ?"
