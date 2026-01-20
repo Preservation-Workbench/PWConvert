@@ -144,7 +144,7 @@ class File:
     def convert(
         self, source_dir: str, dest_dir: str, orig_ext: bool, debug: bool,
         set_source_ext: bool, identify_only: bool, keep_originals: bool,
-        q=None, count=None, subfolder=''
+        q=None, count=None, subfolder='', is_svn_repo=False
     ) -> dict[str, Type[str]]:
         """
         Convert file to archive format
@@ -235,12 +235,25 @@ class File:
         norm_path = None
 
         if 'command' in converter and converter['command'] is not None:
-            from_path = source_path
 
             dest_ext = self.get_dest_ext(converter, dest_path, orig_ext, accept)
             if dest_ext:
                 dest_path = dest_path + dest_ext
 
+            if (
+                is_svn_repo and cfg['svn-rename'] and source_path != dest_path
+                and not self.kept
+            ):
+                os.chdir(source_dir)
+                cmd = ['svn', 'move', source_path, dest_path]
+                result, out, err = run_shell_cmd(cmd)
+                if result == 0:
+                    orig_path = source_path
+                    source_path = dest_path
+            else:
+                orig_path = None
+
+            from_path = source_path
             if not accept and from_path.lower() == dest_path.lower():
                 os.makedirs(os.path.dirname(temp_path), exist_ok=True)
                 shutil.move(source_path, temp_path)
@@ -291,6 +304,10 @@ class File:
                     # use shutil.copyfile to not get any file permission error
                     shutil.copyfile(from_path, source_path)
                     os.remove(from_path)
+
+                if orig_path:
+                    cmd = ['svn', 'move', dest_path, orig_path]
+                    result, out, err = run_shell_cmd(cmd)
 
                 norm_path = False
                 self.kept = True

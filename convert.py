@@ -33,7 +33,7 @@ import petl as etl
 from storage import Storage
 from file import File
 from util import (remove_file, start_uno_server, pwconv_path, make_filelist,
-                  filelist_to_storage)
+                  filelist_to_storage, run_shell_cmd)
 from config import cfg, converters
 
 console = Console()
@@ -108,8 +108,14 @@ def convert(
     skipped, timeout, new.
     """
 
+    is_svn_repo = False
     if dest is None:
         dest = source
+        os.chdir(source)
+        result, out, err = run_shell_cmd(['svn', 'status'])
+        os.chdir(pwconv_path)
+        if not err:
+            is_svn_repo = True
 
     Path(dest).mkdir(parents=True, exist_ok=True)
     ts = datetime.datetime.now()
@@ -219,7 +225,8 @@ def convert(
                 q.put(row['id'])
 
             args = (source, dest, orig_ext, debug, set_source_ext,
-                    identify_only, keep_originals, q, count, subfolder)
+                    identify_only, keep_originals, q, count, subfolder,
+                    is_svn_repo)
             job = pool.apply_async(file.convert, args=args,
                                    error_callback=handle_error)
             jobs.append(job)
