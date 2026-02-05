@@ -166,7 +166,7 @@ class File:
             self.ext and mime_from_ext is None and ext_from_mime is not None
             and self.mime not in [
                 'application/octet-stream',
-                'application/xml'
+                'application/xml',
                 'text/plain'
             ]
         ):
