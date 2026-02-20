@@ -6,9 +6,10 @@ import datetime
 from multiprocessing import Pool, Manager
 
 import typer
-from util import run_shell_cmd
+from .util import run_shell_cmd
 
-# fn = ''
+app = typer.Typer(rich_markup_mode="rich")
+cwd = os.getcwd()
 
 
 # handle raised errors
@@ -29,15 +30,19 @@ def listener(q, fn):
                 f.flush()
 
 
-def validate(dir: str, validator: str = 'pdfcpu', multi: bool = False,
-             mode: str = 'relaxed'):
-    """ Validate directory of files
+@app.command()
+def validate_pdfs(dir: str, validator: str = 'pdfcpu', multi: bool = False,
+                  mode: str = 'relaxed'):
+    """ Validate pdf files in directory and list invalid files
 
     --validator pdfcpu|qpdf|gs\n
-    ..          NOTE: qpdf must be installed before being used
+                NOTE: qpdf must be installed before being used
 
     --multi     convert subfolders with multiprocessing
     """
+
+    if dir[0] != '/':
+        dir = os.path.join(cwd, dir)
 
     fn = dir + '/invalid-pdfs.txt'
 
@@ -75,13 +80,22 @@ def validate(dir: str, validator: str = 'pdfcpu', multi: bool = False,
         pool.join()
     else:
         error_files = validate_folder(dir, None, validator, mode, True)
-        with open(fn, 'w') as f:
-            f.write(error_files)
-            f.flush()
+        if len(error_files):
+            with open(fn, 'w') as f:
+                f.write(error_files)
+                f.flush()
 
     duration = str(datetime.timedelta(seconds=round(time.time() - t0)))
     print('\nValidation finished in ' + duration)
-    print('Invalid files written to ', fn)
+    line_count = 0
+    if os.path.exists(fn):
+        with open(fn, 'r') as file:
+            line_count = sum(1 for line in file)
+
+    if line_count:
+        print(str(line_count) + ' invalid files written to ', fn)
+    else:
+        print('All files are valid pdfs')
 
     return
 
@@ -100,12 +114,12 @@ def validate_folder(dir, q, validator, mode, recursive):
         i += 1
 
         if validator == 'gs':
-            cmd = 'gs -o /dev/null -sDEVICE=nullpage -dBATCH -dNOPAUSE ' + f
+            cmd = 'gs -o /dev/null -sDEVICE=nullpage -dBATCH -dNOPAUSE "' + f + '"'
         elif validator == 'qpdf':
-            cmd = 'qpdf --check ' + f
+            cmd = 'qpdf --check "' + f + '"'
             cmd += ' --warning-exit-0' if mode == 'relaxed' else ''
         else:
-            cmd = 'pdfcpu validate ' + f + ' || qpdf -check ' + f
+            cmd = 'pdfcpu validate "' + f + '"'
             cmd += ' -m srict' if mode == 'strict' else ''
         result, out, err = run_shell_cmd(cmd, shell=True, timeout=300)
         print(end='\x1b[2K')  # clear line
@@ -143,7 +157,3 @@ def validate_folder(dir, q, validator, mode, recursive):
         q.put(error_files)
 
     return error_files
-
-
-if __name__ == "__main__":
-    typer.run(validate)

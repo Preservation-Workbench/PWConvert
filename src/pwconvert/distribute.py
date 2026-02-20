@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import typer
 import shutil
@@ -8,9 +6,9 @@ import datetime
 from math import ceil
 from pathlib import Path
 from natsort import natsorted
-from storage import Storage
-from file import File
-from util import make_filelist, filelist_to_storage
+from .storage import Storage
+from .file import File
+from .util import make_filelist, filelist_to_storage
 
 
 # holds the original path so it can be used in distribute function recursively
@@ -22,7 +20,11 @@ count = 0
 # dry run for counting total files that should be moved
 dry_run = True
 
+app = typer.Typer(rich_markup_mode="markdown")
+cwd = os.getcwd()
 
+
+@app.command()
 def distribute(
     path: str = typer.Argument(help="Path to folder where files should be distibuted"),
     max: int = typer.Argument(help="Max number of files in each folder"),
@@ -42,7 +44,11 @@ def distribute(
     ),
     debug: bool = typer.Option(default=False, hidden=True)
 ):
+    """Distribute files in subfolders"""
+
     global orig_path, file_count, count, dry_run
+    if path[0] != '/':
+        path = os.path.join(cwd, path)
     num_files = len(os.listdir(path))
     orig_path = orig_path or path
     db = db or path.rstrip('/') + '.db'
@@ -209,8 +215,3 @@ def distribute(
             print('\nDistribution finished in ' + duration)
 
     return count
-
-
-if __name__ == "__main__":
-    typer.run(distribute)
-

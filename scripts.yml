@@ -1,14 +1,35 @@
 # This document describes scripts that can be used for conversion.
-# Those ending in .py are scripts distributed with PWConvert.
-# Some of the others are also installed when running install.sh
-text2utf8.py:
-  command: python3 -m bin.text2utf8 <source> <dest>
+# Some scripts are installed when running `uv tool install`, others
+# when running `install.sh`
+abiword:
+  command: abiword --to=pdf --import-extension=rtf <source> -o <dest>
   comment: |
-    Converts text files to utf8 with linux file endings.
-office2pdf.py:
-  command: python3 -m bin.office2pdf <source> <dest>
+    Convert rtf to pdf using Abiword.
+convert:
+  command: convert <source> <dest>
   comment: |
-    Converts office files to pdf with OnlyOffice.
+    Converts between different image formats using ImageMagick.
+    Format of output file is decided by extension.
+dwg2dxf:
+  command: dwg2dxf <source> <dest>
+  comment: |
+    Converts dwg to dxf using ODAFileConverter.
+dwg2pdf:
+  command: dwg2pdf <source> <dest>
+  comment: Converts dwg to pdf. Use option --dark-bg for dark background
+dxf2pdf:
+  command: dxf2pdf <source> <dest>
+  comment: Converts dxf to pdf.
+extract_zip:
+  command: extract_zip <source> <dest-folder>
+  comment: |
+    Unpacks zip files and try to find the correct encoding
+    for file names. Uses config option `special_characters`
+    to test encoding 'IBM850' and 'windows-1252'.
+office2pdf:
+  command: office2pdf <source> <dest>
+  comment: |
+    Converts office files to pdf with OnlyOffice. Installed with `uv tool install`.
 
     Better compatibilty with MS Office than LibreOffice,
     so the resulting pdf often looks better than conversion using
@@ -16,74 +37,29 @@ office2pdf.py:
 
     The version distributed wit PWConvert is free, but more recent
     versions are not.
-unoconvert:
-  command: unoconvert --convert-to pdf <source> <target>
-  comment: |
-    Converts with LibreOffice all formats supported by this office suite.
-    It can convert directly to pdf/a.
-
-    This is the default converter for office files.
-
-    Much faster than office2pdf.py, which uses OnlyOffice,
-    but compatibility with MS Office formats is not as good,
-    so the resulting pdf is sometimes poorly formatted.
-unzip.py:
-  command: python3 -m bin.unzip <source> <temp>
-  comment: |
-    Unpacks zip files and try to find the correct encoding
-    for file names. Uses config option `special_characters`
-    to test encoding.
-abiword:
-  command: abiword --to=pdf --import-extension=rtf <source> -o <target>
-  comment: |
-    Convert rtf to pdf using Abiword
-wkhtmltopdf:
-  command: wkhtmltopdf -O Landscape <source> <target>
-  comment: |
-    Convert html to pdf using QT Webkit rendering engine.
-mhtml2pdf.py:
-  # TODO: Test to see if working properly
-  command: python3 -m bin.mhtml2pdf <source> <target>
-  comment: |
-    Convert archived web content to pdf.
-eml2pdf.py:
-  # TODO: Probably not working
-  command: python3 -m bin.eml2pdf <source> <target>
-  comment: |
-    Convert email to pdf
-convert:
-  command: convert <source> <target>
-  comment: |
-    Converts between different image formats
-    using ImageMagick. File extension of output
-    file is decided by extension.
-pdf2pdfa.py:
-  command: python3 -m bin.pdf2pdfa <source> <target>
-  comment: |
-    Converts pdf to pdf/a with ocrmypdf.
-    Reads the document with OCR and produces a
-    text file with the same name as the pdf file
-    but with extension '.txt'. This can be used in
-    full text search.
-pdf2pdfa.sh:
-  command: bin/pdf2pdfa.sh <source> <target>
-  comment: |
-    Converts pdf to pdf/a with ghostscript.
-    Produces version PDF/A-2.
-pdf2text:
-  command: pdf2text.py <source>
-  comment: |
-    Uses Ghostscript to extract text from pdf and save as text file.
-html2pdf.py:
-  command: html2pdf.py <source> <target>
-  comment: |
-    Converts html to pdf, using Chrome printing functionality.
 pandoc:
-  command: pandoc <source> -s -o <target>
+  command: pandoc <source> -s -o <dest>
   comment: |
     Converts between many document formats.
     File extension on in- and out-file decides output file format.
-image2pdf:
-  command: image2pdf.py <source> <target>
+pdf2pdfa:
+  command: pdf2pdfa <source> <dest>
   comment: |
-    Converts image formats to pdf/a
+    Converts pdf to pdf/a with Ghostscript. Installed with `uv tool install`
+    Produces version PDF/A-2.
+unoconvert:
+  command: unoconvert --convert-to pdf <source> <dest>
+  comment: |
+    Converts with LibreOffice all formats supported by this office suite.
+    It can convert directly to pdf/a by setting option
+    `--filter-option SelectPdfVersion=2 `
+
+    This is the default converter for office files.
+
+    Much faster than office2pdf, which uses OnlyOffice,
+    but compatibility with MS Office formats is not as good,
+    so the resulting pdf is sometimes poorly formatted.
+wkhtmltopdf:
+  command: wkhtmltopdf -O Landscape <source> <dest>
+  comment: |
+    Convert html to pdf using QT Webkit rendering engine.

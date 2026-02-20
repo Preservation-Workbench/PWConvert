@@ -5,8 +5,17 @@ from ezdxf.addons.drawing import Frontend, RenderContext
 from ezdxf.addons.drawing import layout, pymupdf, config
 import typer
 
+app = typer.Typer(rich_markup_mode="markdown")
+cwd = os.getcwd()
 
+
+@app.command()
 def dwg2pdf(src_path: str, dest_path: str, dark_bg: bool = False):
+
+    if src_path[0] != '/':
+        src_path = os.path.join(cwd, src_path)
+    if dest_path[0] != '/':
+        dest_path = os.path.join(cwd, dest_path)
 
     tmp_path = '/tmp/file.dxf'
     if os.path.exists(tmp_path):
@@ -36,7 +45,3 @@ def dwg2pdf(src_path: str, dest_path: str, dark_bg: bool = False):
 
     with open(dest_path, "wb") as fp:
         fp.write(backend.get_pdf_bytes(layout.Page(0, 0)))
-
-
-if __name__ == "__main__":
-    typer.run(dwg2pdf)

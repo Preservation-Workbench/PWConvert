@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-
-# Copyright(C) 2022 Morten Eek
-
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
@@ -30,15 +26,15 @@ import typer
 from rich.console import Console
 import petl as etl
 
-from storage import Storage
-from file import File
-from util import (remove_file, start_uno_server, pwconv_path, make_filelist,
-                  filelist_to_storage, run_shell_cmd)
-from config import cfg, converters
+from .storage import Storage
+from .file import File
+from .util import (remove_file, start_uno_server, make_filelist,
+                   filelist_to_storage, run_shell_cmd)
+from .config import cfg, converters
 
+cwd = os.getcwd()
 console = Console()
-os.chdir(pwconv_path)
-app = typer.Typer(rich_markup_mode="markdown")
+app = typer.Typer(rich_markup_mode="rich")
 
 
 # handle raised errors
@@ -100,20 +96,25 @@ def convert(
     """
     Convert all files in SOURCE folder
 
-    If `--dest` is not set, then the conversion is done inside the `source`
-    folder (`dest=source`).
-    If `--db` is not set, it uses a SQLite base with path like `dest` and
+    If --dest is not set, then the conversion is done inside the SOURCE
+    folder. (--dest == SOURCE)
+    If --db is not set, it uses a SQLite base with path like --dest and
     .db extension.
-    `--status` can be one of: accepted, converted, deleted, failed, protected,
+    --status can be one of: accepted, converted, deleted, failed, protected,
     skipped, timeout, new.
     """
+
+    if source[0] != '/':
+        source = os.path.join(cwd, source)
+    if dest and dest[0] != '/':
+        dest = os.path.join(cwd, dest)
 
     is_svn_repo = False
     if dest is None:
         dest = source
         os.chdir(source)
         result, out, err = run_shell_cmd(['svn', 'status'])
-        os.chdir(pwconv_path)
+        os.chdir(cwd)
         if not err:
             is_svn_repo = True
 
@@ -329,7 +330,3 @@ def check_files(source_dir, store):
             return 'added'
         elif answ != 'y':
             return 'cancelled'
-
-
-if __name__ == "__main__":
-    app()

@@ -1,11 +1,14 @@
 from shlex import quote
 import typer
 
-from util import run_shell_cmd
-from config import cfg
+from pwconvert.util import run_shell_cmd
+from pwconvert.config import cfg
+
+app = typer.Typer(rich_markup_mode="markdown")
 
 
-def unzip(zipfile, to_dir):
+@app.command()
+def extract_zip(zipfile, to_dir):
     """ Unzip file with correct encoding for norwegian """
     encoding = None
     for enc in ['IBM850', 'windows-1252']:
@@ -29,7 +32,3 @@ def unzip(zipfile, to_dir):
         raise typer.Exit(code=1)
 
     return None
-
-
-if __name__ == '__main__':
-    typer.run(unzip)

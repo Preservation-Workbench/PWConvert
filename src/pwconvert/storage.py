@@ -7,7 +7,7 @@ from pathlib import Path
 
 import petl
 from petl import appenddb, fromdb, todb
-from config import cfg
+from .config import cfg
 
 
 class Storage:
@@ -360,7 +360,7 @@ class Storage:
         if len(conds):
             select += " WHERE " + ' AND '.join(conds)
 
-        select += 'ORDER BY path'
+        select += ' ORDER BY path'
 
         # Since the selection is run for every file, limit the result.
         # If not the query takes too long on MySQL for large number of files
@@ -542,8 +542,8 @@ class Storage:
         sql = """
         update file
         set status = 'new'
-        where id in (select file2.source_id from file
-                     join file file2 on file2.path = file.path and file2.id > file.id
+        where id in (select file.source_id from file
+                     join file file2 on file2.path = file.path and file2.status_ts > file.status_ts
                      where file.source_id is not null and file2.source_id is not null)
         """
 

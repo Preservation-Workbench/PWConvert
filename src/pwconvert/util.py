@@ -7,13 +7,9 @@ import signal
 import zipfile
 import psutil
 import time
-from pathlib import Path
 import petl as etl
-from config import cfg
-from storage import Storage
-
-
-pwconv_path = Path(__file__).parent.parent.resolve()
+from pwconvert.config import cfg
+from pwconvert.storage import Storage
 
 
 def run_shell_cmd(command, cwd=None, timeout=None,

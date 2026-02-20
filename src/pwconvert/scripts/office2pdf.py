@@ -3,12 +3,13 @@
 import sys
 from pathlib import Path
 import uuid
-
 import typer
+from pwconvert.util import run_shell_cmd
 
-from util import run_shell_cmd
+app = typer.Typer(rich_markup_mode="markdown")
 
 
+@app.command()
 def office2pdf(source_file: str, target_file: str):
     """
     Convert office files to pdf
@@ -41,6 +42,3 @@ def office2pdf(source_file: str, target_file: str):
         print('err', err)
         sys.exit(1)
 
-
-if __name__ == '__main__':
-    typer.run(office2pdf)

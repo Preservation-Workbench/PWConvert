@@ -1,0 +1,35 @@
+[project]
+name = "pwconvert"
+version = "0.1.0"
+description = "Generic file conversion"
+readme = "README.md"
+authors = [
+    { name = "Frode Kirkholt", email = "fkirkholt@yahoo.no" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "ezdxf>=1.4.3",
+    "natsort>=8.4.0",
+    "petl>=1.7.17",
+    "pillow>=12.1.1",
+    "psutil>=7.2.2",
+    "pymupdf>=1.27.1",
+    "pymysql>=1.1.2",
+    "python-magic>=0.4.27",
+    "ruamel-yaml>=0.19.1",
+    "typer>=0.22.0",
+]
+
+[project.scripts]
+pw = "pwconvert:app"
+pwconvert = "pwconvert.convert:app"
+pdf2pdfa = "pwconvert.scripts.pdf2pdfa:app"
+office2pdf = "pwconvert.scripts.office2pdf:app"
+extract-zip = "pwconvert.scripts.extract_zip:app"
+dwg2dxf = "pwconvert.scripts.dwg2dxf:app"
+dxf2pdf = "pwconvert.scripts.dxf2pdf:app"
+dwg2pdf = "pwconvert.scripts.dwg2pdf:app"
+
+[build-system]
+requires = ["uv_build>=0.10.0,<0.11.0"]
+build-backend = "uv_build"

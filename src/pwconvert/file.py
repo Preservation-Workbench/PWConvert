@@ -15,12 +15,12 @@ from rich.console import Console
 
 import magic
 
-from storage import Storage
-from config import cfg, converters
-from util import run_shell_cmd
+from .storage import Storage
+from .config import cfg, converters
+from .util import run_shell_cmd
 
 console = Console()
-pwconv_path = Path(__file__).parent.resolve()
+cwd = os.getcwd()
 
 
 class File:
@@ -126,6 +126,8 @@ class File:
             cmd = cmd.replace("<pid>", str(os.getpid()))
             cmd = cmd.replace("<stem>", quote(self._stem))
             cmd = cmd.replace("<accept>", str(accept).lower())
+            if self.encoding:
+                cmd = cmd.replace("<encoding>", self.encoding)
 
         return cmd
 
@@ -272,7 +274,7 @@ class File:
             # Don't run convert command if file is converted manually
             if (not os.path.isfile(dest_path) or os.path.getsize(dest_path) == self.size):
 
-                returncode, out, err = run_shell_cmd(cmd, cwd=pwconv_path,
+                returncode, out, err = run_shell_cmd(cmd, cwd=cwd,
                                                      shell=True, timeout=timeout)
 
             if returncode or not os.path.exists(dest_path):

@@ -42,7 +42,7 @@ application/gzip:
 application/javascript:
   accept: true
 application/json:
-  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
   accept:
     encoding: [utf-8, ascii, us-ascii]
 application/mp4:
@@ -64,7 +64,7 @@ application/postscript:
   command: ps2pdf -dPDFA=2 <source> <dest>
   dest-ext: pdf
 application/pdf:
-  command: if ! <accept>; then pdfcpu validate <source> && bin/pdf2pdfa.sh <source> <dest>; fi
+  command: if ! <accept>; then pdfcpu validate <source> && pdf2pdfa <source> <dest>; fi
   dest-ext: pdf
   timeout: 300
   accept:
@@ -160,7 +160,7 @@ application/zip:
       command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
       dest-ext: pdf
   puid:
-    fmt1441: # iWork files
+    fmt/1441:  # iWork files
       # iWork files have a preview file, so we remove other data
       command: unzip <source> -d <dest> -x Index/* Metadata/* Data/*
 audio/3gpp:
@@ -208,20 +208,17 @@ image/png:
 image/tiff:
   command: tiff2pdf -o <dest> <source>
   dest-ext: pdf
-
-# To convert dwg and dxf, download and install the ODAFileConverter
-# https://www.opendesign.com/guestfiles/oda_file_converter
-# image/vnd.dwg:
-#   # Use option --dark-bg for dark background
-#   command: python3 -m bin.dwg2pdf <source> <dest>
-#   dest-ext: pdf
-#   keep: true
-#   timeout: 90
-# image/vnd.dxf:
-#   command: python3 -m bin.dxf2pdf <source> <dest>
-#   dest-ext: pdf
-#   keep: true
-#   timeout: 90
+image/vnd.dwg:
+  # Use option --dark-bg for dark background
+  command: dwg2pdf <source> <dest>
+  dest-ext: pdf
+  keep: true
+  timeout: 90
+image/vnd.dxf:
+  command: dxf2pdf <source> <dest>
+  dest-ext: pdf
+  keep: true
+  timeout: 90
 image/vnd.microsoft.icon:
   accept: true
   dest-ext: ico
@@ -253,25 +250,25 @@ multipart/related:
 text/calendar:
   accept: true
 text/css:
-  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/csv:
-  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/html:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
   dest-ext: pdf
 text/markdown:
-  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
   dest-ext: md
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/x-msdos-batch:
   accept: true
 text/plain:
-  command: if ! <accept>; then python3 -m bin.text2utf8 <source> <dest>; fi
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
   accept:
     encoding: [utf-8, ascii, us-ascii]
 text/rtf:

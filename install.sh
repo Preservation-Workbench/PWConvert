@@ -3,7 +3,6 @@ export DEBIAN_FRONTEND=noninteractive
 SCRIPTPATH=$(dirname $(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null||echo $0))
 OWNER=$(stat -c '%U' $SCRIPTPATH)
 UPDATE=false
-EMAILCONVERTPATH=/home/$OWNER/.local/bin/emailconvert
 # USERID=$(id -u $OWNER)
 # export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USERID/bus";
 
@@ -61,17 +60,16 @@ curl -LOs https://github.com/ONLYOFFICE/DocumentBuilder/releases/download/v8.0.0
 cecho "CYAN" "Installing Siegfried"
 curl -LOs https://github.com/richardlehane/siegfried/releases/download/v1.11.0/siegfried_1.11.0-1_amd64.deb && apt install ./siegfried_1.11.0-1_amd64.deb && rm -f siegfried_1.11.0-1_amd64.deb
 
-cecho "CYAN" "Install mail converter..";
-gem install nokogiri -v 1.15.6;
-gem install net-imap -v 0.3.7;
-gem install eml_to_pdf;
-recho $?;
-
 cecho "CYAN" "Installing java email converter..";
-if [ ! -f $EMAILCONVERTPATH/emailconverter.jar ]; then
-    mkdir -p $EMAILCONVERTPATH;
-    curl -o $EMAILCONVERTPATH/emailconverter.jar -L \
-    https://github.com/nickrussler/email-to-pdf-converter/releases/download/2.5.3/emailconverter-2.5.3-all.jar;
+if [ ! -f /home/$OWNER/.local/bin/emailconverter ]; then
+    curl -o /home/$OWNER/.local/bin/emailconverter.jar -L \
+    https://github.com/nickrussler/email-to-pdf-converter/releases/download/3.0.0/emailconverter-3.0.0-all.jar;
+    cd /home/$OWNER/.local/bin
+    echo '#!/bin/sh' > stub.sh && echo 'exec java -jar "$0" "$@"' >> stub.sh
+    cat stub.sh emailconverter.jar > email2pdf && chmod +x email2pdf && rm stub.sh
+    rm emailconverter.jar
+    cd $SCRIPTPATH
+
     recho $?;  
 fi
 
@@ -85,10 +83,9 @@ if [ ! -f /home/$OWNER/.local/bin/pdfcpu ]; then
     rm -r /home/$OWNER/pdfcpu_0.8.1_Linux_x86_64;
 fi
 
-# The link doesn't work anymore (2024-12-12)
-# cecho "CYAN" "Installing ODAFileConverter..";
-# curl -LOs https://download.opendesign.com/guestfiles/Demo/ODAFileConverter_QT6_lnxX64_8.3dll_25.5.deb && apt install ./ODAFileConverter_QT6_lnxX64_8.3dll_25.5.deb && rm -f ODAFileConverter_QT6_lnxX64_8.3dll_25.5.deb;
-# recho $?;
+cecho "CYAN" "Installing ODAFileConverter..";
+curl -L https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_26.12.deb -o ODAFileConverter.deb && apt install ./ODAFileConverter.deb && rm -f ODAFileConverter.deb
+recho $?;
 
 cecho "CYAN" "Fix fuse permissions..";
 sed -i -e 's/#user_allow_other/user_allow_other/' /etc/fuse.conf;
