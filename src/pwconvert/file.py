@@ -85,10 +85,21 @@ class File:
             result = subprocess.run(cmd, capture_output=True, text=True)
             self.encoding = result.stdout.split(';')[1].replace('charset=', '').strip()
 
+        if self.encoding in ['ascii', 'us-ascii']:
+            self.encoding = 'utf-8'
+
         if self.encoding and self.encoding != 'binary' and cfg['get-text']:
             with open(source_path, 'r', encoding=self.encoding) as file:
-                content = file.read()
-                self._content = ' '.join(content.split())
+                content = None
+                try:
+                    content = file.read()
+                except Exception as e:
+                    print('self.path', self.path)
+                    print('self.encoding', self.encoding)
+                    print(e)
+
+                if content:
+                    self._content = ' '.join(content.split())
 
     def get_dest_ext(self, converter, dest_path, orig_ext, accept):
         dest_ext = None
