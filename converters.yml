@@ -279,6 +279,10 @@ text/rtf:
   dest-ext: pdf
   # mimetypes.guess_extension doesn't recognize text/rtf, only application/rtf
   ext: rtf
+text/tab-separated-values:
+  command: <accept> || iconv -f <encoding> -t UTF-8 <source> > <dest>
+  accept:
+    encoding: [utf-8, ascii, us-ascii]
 text/vnd.sosi:
   accept: true
 text/x-vCalendar:
