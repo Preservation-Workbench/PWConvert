@@ -442,7 +442,7 @@ class File:
                 self.id is None and new_file.format == self.format and
                 new_file.encoding == self.encoding
             ):
-                new_file.status = 'failed'
+                new_file.status = 'accepted'
                 new_file.kept = True
                 norm_file = False
             else:
