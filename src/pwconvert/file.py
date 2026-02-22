@@ -305,7 +305,7 @@ class File:
                 elif not accept:
                     self.status = 'failed'
 
-                if debug:
+                if debug and returncode:
                     print("\nCommand: " + cmd + f" ({returncode})", end="")
                     if out != 'timeout':
                         print('out', out)
