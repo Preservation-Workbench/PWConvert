@@ -133,10 +133,9 @@ def start_uno_server():
     if uno_server_running():
         return
 
-    cmd = [cfg['libreoffice_python'], '-m', 'unoserver.server']
     started = False
     subprocess.Popen(
-        cmd,
+        'unoserver',
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.DEVNULL,

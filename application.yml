@@ -14,8 +14,6 @@ debug: false
 use_siegfried: true
 # set timeout in seconds for file converters
 timeout: 60
-# Path to python version for LibreOffice, used by UnoServer
-libreoffice_python: python3
 # Characters in local language, used to find encoding in `bin/unzip.py`
 # E.g ['æ', 'ø', 'å'] for detecting character set supporting Norwegian
 special_characters: []
