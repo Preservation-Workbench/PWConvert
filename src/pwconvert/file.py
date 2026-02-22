@@ -95,7 +95,7 @@ class File:
         # keep extension for text files converted to utf8
         if 'dest-ext' not in converter and self.mime.startswith('text/'):
             dest_ext = self.ext
-        elif 'dest-ext' in converter:
+        elif 'dest-ext' in converter and converter['dest-ext']:
             if 'echo' in converter['dest-ext']:
                 cmd = converter['dest-ext'].replace("<accept>", str(accept).lower())
                 returncode, out, err = run_shell_cmd(cmd, shell=True)
