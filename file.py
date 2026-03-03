@@ -314,7 +314,7 @@ class File:
             if not self.ext or subfolder or (
                 mime is not None and mime != self.mime and
                 self.ext != mime_ext and
-                self.mime != 'application/octet-stream' and
+                self.mime not in ['application/octet-stream', 'text/plain'] and
                 self.status not in ['skipped', 'failed', 'timeout']
             ):
                 self.status = 'renamed'
