@@ -116,7 +116,7 @@ class File:
                             else '.' + converter['dest-ext'].strip('.'))
 
         if orig_ext and dest_ext != self.ext:
-            dest_ext = self.ext + dest_ext
+            dest_ext = (self.ext or '') + dest_ext
 
         return dest_ext
 
