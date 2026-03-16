@@ -131,9 +131,9 @@ class File:
             cmd = cmd.replace("<source>", quote(source_path))
             cmd = cmd.replace("<dest>", quote(dest_path))
             cmd = cmd.replace("<source-parent>",
-                              quote(str(Path(source_path).parent)))
+                              quote(str(Path(source_path).parent) + '/'))
             cmd = cmd.replace("<dest-parent>",
-                              quote(str(Path(dest_path).parent)))
+                              quote(str(Path(dest_path).parent) + '/'))
             cmd = cmd.replace("<pid>", str(os.getpid()))
             cmd = cmd.replace("<stem>", quote(self._stem))
             cmd = cmd.replace("<accept>", str(accept).lower())
