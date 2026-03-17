@@ -159,8 +159,6 @@ class Storage:
         return rec
 
     def update_row(self, data: dict):
-        if 'norm' in data:
-            del data['norm']
         id = data['id']
         sql = 'UPDATE file SET {}'.format(', '.join('{}=?'.format(k) for k in data
                                                     if k != 'id' and not k.startswith('_')))
@@ -170,8 +168,12 @@ class Storage:
         cursor = self._conn.cursor()
         if self.system == 'sqlite':
             cursor.execute('PRAGMA journal_mode=wal')
-        cursor.execute(sql, tuple(v for k, v in data.items()
-                                  if k != 'id' and not k.startswith('_')))
+        try:
+            cursor.execute(sql, tuple(v for k, v in data.items()
+                                      if k != 'id' and not k.startswith('_')))
+        except Exception as e:
+            print(e)
+
         self._conn.commit()
 
     def add_row(self, data: dict):

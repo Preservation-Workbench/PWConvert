@@ -225,9 +225,7 @@ class File:
             source_path = os.path.join(source_dir, self.path)
 
         if identify_only:
-            if q:
-                self.norm = False
-                q.put(self)
+            q.put(self)
             return None
 
         # Set converter for special puid or source-ext defined for the mime type
@@ -394,6 +392,7 @@ class File:
                 files = [relpath(os.path.join(dirpath, f), start=dest_dir)
                          for (dirpath, dirnames, filenames)
                          in os.walk(dest_path) for f in filenames]
+                q.put(self)
                 for file_path in files:
                     row = {
                         'id': None,
@@ -405,13 +404,9 @@ class File:
                         'kept': False
                     }
                     file = File(row, True)
-                    file.norm = file.convert(source_dir, dest_dir, orig_ext,
-                                             debug, set_source_ext, identify_only,
-                                             keep_originals, q)
+                    file.convert(source_dir, dest_dir, orig_ext, debug,
+                                 set_source_ext, identify_only, keep_originals, q)
 
-                if q:
-                    self.norm = None
-                    q.put(self)
                 return
 
             row = {
@@ -435,55 +430,33 @@ class File:
                 new_file.path = new_file.path + new_file.ext
                 shutil.move(Path(dest_dir, norm_path), Path(dest_dir, new_file.path))
 
+            q.put(self)
             # If the file is converted again with the same extension,
             # we should accept it. This happens when a pdf can't be
             # converted to pdf/a. Ghostscript writes an ordinary pdf
             if (
-                self.id is None and new_file.format == self.format and
+                new_file.format == self.format and
                 new_file.encoding == self.encoding
             ):
                 new_file.status = 'accepted'
                 new_file.kept = True
-                norm_file = False
+                q.put(new_file)
             else:
-                norm_file = new_file.convert(source_dir, dest_dir, orig_ext,
-                                             debug, set_source_ext, identify_only,
-                                             keep_originals)
-            if q:
-                if new_file.kept:
-                    # Register converted file in database if it should be kept
-                    self.norm = new_file
-                    q.put(self)
-
-                self.norm = norm_file
-                q.put(self)
-            return norm_file or new_file
-
+                new_file.convert(source_dir, dest_dir, orig_ext,
+                                 debug, set_source_ext, identify_only,
+                                 keep_originals, q)
         else:
-            if q:
-                self.norm = False
-                q.put(self)
-            return False
+            q.put(self)
 
     def log(self, db):
         with Storage(db) as store:
-            if self.norm is None:  # --identify-only
-                pass
-            elif self.norm is False:  # conversion failed
-                if self.status != 'accepted':
-                    pass
-                    # print(end='\x1b[2K')  # clear line
-                    # console.print('  ' + self.status, style="bold red")
-                    # print('test')
-            else:
-                if self.norm.status != 'new':
-                    self.norm.status_ts = datetime.datetime.now()
-                store.add_row(self.norm.__dict__)
-                if self.norm._content:
-                    store.write_content(self.norm.source_id, self.norm._content)
-
             self.status_ts = datetime.datetime.now()
             if self.id:
                 store.update_row(self.__dict__)
                 if self._content:
                     store.write_content(self.id, self._content)
+            else:
+                store.add_row(self.__dict__)
+                if self._content:
+                    store.write_content(self.source_id, self._content)
+

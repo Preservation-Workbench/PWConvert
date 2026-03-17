@@ -183,7 +183,6 @@ def distribute(
                         file.set_metadata(file_path, orig_path)
                         file.status = 'renamed'
                         file.kept = 0
-                        file.norm = None
                         file.log(db)
                         rec = file.__dict__
                     else:
