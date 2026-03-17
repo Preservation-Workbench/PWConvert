@@ -49,6 +49,10 @@ def limit_cpu():
     p.nice(19)
 
 
+def report_error(e):
+    print(f"Error in listener: {e}")
+
+
 @app.command()
 def convert(
     source: str,
@@ -193,7 +197,7 @@ def convert(
         }
 
         # put listener to work first
-        pool.apply_async(listener, (q, db))
+        pool.apply_async(listener, (q, db), error_callback=report_error)
 
         n = 0
         conds, params = store.get_conds(finished=True, original=True)
