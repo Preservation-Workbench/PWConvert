@@ -85,6 +85,7 @@ application/vnd.ms-excel.sheet.macroEnabled.12:
   dest-ext: xlsx
 application/vnd.ms-outlook:
   # Library of Congress has no preferred format, but accepts both .msg and .pst
+  command: extract_msg <source> --out <dest-parent> --out-name <stem> --pdf
   accept: true
 application/vnd.ms-powerpoint:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
