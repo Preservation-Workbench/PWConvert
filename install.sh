@@ -51,7 +51,7 @@ apt-get install -y ttf-mscorefonts-installer pandoc abiword sqlite3 uchardet \
     icc-profiles-free clamtk  php-cli wkhtmltopdf texlive-xetex librsvg2-bin \
     ruby-dev  imagemagick cabextract dos2unix libclamunrar9 wimtools vlc \
     fontforge python3-pgmagick graphicsmagick graphviz img2pdf golang \
-    php-xml libtiff-tools xvfb;
+    php-xml libtiff-tools xvfb poppler-utils;
 recho $?;
 
 cecho "CYAN" "Installing onlyoffice-documentbuilder"

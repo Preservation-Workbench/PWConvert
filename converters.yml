@@ -64,11 +64,9 @@ application/postscript:
   command: ps2pdf -dPDFA=2 <source> <dest>
   dest-ext: pdf
 application/pdf:
-  command: if ! <accept>; then pdfcpu validate <source> && pdf2pdfa <source> <dest>; fi
-  dest-ext: pdf
-  timeout: 300
-  accept:
-    version: [1a, 1b, 2a, 2b]
+  command: pdftotext -layout -nopgbrk <source> <dest>
+  dest-ext: txt
+  accept: true
 application/rtf:
   command: unoconvert --convert-to pdf --filter-option SelectPdfVersion=2 <source> <dest>
   dest-ext: pdf
