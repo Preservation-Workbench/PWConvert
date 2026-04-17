@@ -27,8 +27,8 @@ if [ "$EUID" -ne 0 ]; then
     cecho "RED" "Please run as root!"; exit 1;
 fi
 
-DISTRO=$(lsb_release -sc) # Get distro codename
-if [[ "${DISTRO}" != @(uma|ulyana|focal|jammy|Ulyssa|una|vanessa|virginia) ]]; then
+# check if apt command is present
+if ! command -v apt >/dev/null 2>&1; then
     cecho "RED" "Distro not supported. Exiting script.."; exit 1;
 fi
 
