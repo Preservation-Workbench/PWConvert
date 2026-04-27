@@ -60,19 +60,6 @@ curl -LOs https://github.com/ONLYOFFICE/DocumentBuilder/releases/download/v8.0.0
 cecho "CYAN" "Installing Siegfried"
 curl -LOs https://github.com/richardlehane/siegfried/releases/download/v1.11.0/siegfried_1.11.0-1_amd64.deb && apt install ./siegfried_1.11.0-1_amd64.deb && rm -f siegfried_1.11.0-1_amd64.deb
 
-cecho "CYAN" "Installing java email converter..";
-if [ ! -f /home/$OWNER/.local/bin/emailconverter ]; then
-    curl -o /home/$OWNER/.local/bin/emailconverter.jar -L \
-    https://github.com/nickrussler/email-to-pdf-converter/releases/download/3.0.0/emailconverter-3.0.0-all.jar;
-    cd /home/$OWNER/.local/bin
-    echo '#!/bin/sh' > stub.sh && echo 'exec java -jar "$0" "$@"' >> stub.sh
-    cat stub.sh emailconverter.jar > email2pdf && chmod +x email2pdf && rm stub.sh
-    rm emailconverter.jar
-    cd $SCRIPTPATH
-
-    recho $?;  
-fi
-
 cecho "CYAN" "Installing pdfcpu..";
 if [ ! -f /home/$OWNER/.local/bin/pdfcpu ]; then
     curl -o /home/$OWNER/pdfcpu_0.8.1_Linux_x86_64.tar.xz -L \
