@@ -1,25 +1,26 @@
-import os
+import importlib.resources as pkg_resources
 from pathlib import Path
 from ruamel.yaml import YAML
 
 pwconv_path = Path(__file__).parent.resolve()
 yaml = YAML()
 
-with open(Path(pwconv_path, "../../converters.yml"), "r") as content:
-    converters = yaml.load(content)
-with open(Path(pwconv_path, "../../application.yml"), "r") as content:
-    cfg = yaml.load(content)
+default_resource = pkg_resources.files("pwconvert").joinpath("converters.yml")
+converters = yaml.load(default_resource.read_text())
+default_resource = pkg_resources.files("pwconvert").joinpath("application.yml")
+cfg = yaml.load(default_resource.read_text())
 
-_local_converters = {}
-if os.path.exists(Path(pwconv_path, '../../converters.local.yml')):
-    with open(Path(pwconv_path, '../../converters.local.yml'), 'r') as content:
-        _local_converters = yaml.load(content)
+user_converter_path = Path.home() / ".config" / "pwconvert" / "converters.yml"
+user_cfg_path = Path.home() / ".config" / "pwconvert" / "application.yml"
 
-_local_cfg = {}
-if os.path.exists(Path(pwconv_path, '../../application.local.yml')):
-    with open(Path(pwconv_path, "../../application.local.yml"), "r") as content:
-        _local_cfg = yaml.load(content)
+if user_converter_path.exists():
+    with open(user_converter_path, "r") as content:
+        user_converters = yaml.load(content)
+    if user_converters:
+        converters.update(user_converters)
 
-# Properties set in local files will overwrite those in tracked files
-converters.update(_local_converters)
-cfg.update(_local_cfg)
+if user_cfg_path.exists():
+    with open(user_cfg_path, "r") as content:
+        user_cfg = yaml.load(content)
+    if user_cfg:
+        cfg.update(user_cfg)

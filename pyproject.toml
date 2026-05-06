@@ -21,6 +21,13 @@ dependencies = [
     "typer>=0.22.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["pwconvert"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"pwconvert/converters.yml" = "pwconvert/converters.yml"
+"pwconvert/application.yml" = "pwconvert/application.yml"
+
 [project.scripts]
 pw = "pwconvert:app"
 pwconvert = "pwconvert.convert:app"

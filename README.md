@@ -17,13 +17,9 @@ original files. Use at own risk.
    ```
 2. cd into cloned repo
 3. Make sure [uv](https://docs.astral.sh/uv/getting-started/installation/) is installed
-4. Create virtual environment and install dependencies
+4. Install scripts globally
    ```sh
-   uv sync
-   ```
-5. Install scripts globally
-   ```sh
-   uv tool install .
+   uv tool install --force .
    ```
 
    You will see which scripts are installed by uv. See also [scripts.yml](./scripts.yml).
@@ -34,8 +30,8 @@ original files. Use at own risk.
 
 # How to use
 
-- Add your desired configuration to `application.local.yml`, overriding `application.yml`
-- Edit or add conversion commands in `converters.local.yml`, overriding `converters.yml`
+- Edit or add configuration in `~/.config/pwconvert/application.yml`, overriding `application.yml`
+- Edit or add conversion commands in `~/.config/pwconvert/converters.yml`, overriding `converters.yml`
 - Run `pw --help` to see which commands are available
 - Run `pw convert --help` to se how to run a conversion on a folder
 
