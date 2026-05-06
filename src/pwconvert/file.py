@@ -436,7 +436,8 @@ class File:
             # converted to pdf/a. Ghostscript writes an ordinary pdf
             if (
                 new_file.format == self.format and
-                new_file.encoding == self.encoding
+                new_file.encoding == self.encoding and
+                new_file.ext == self.ext
             ):
                 new_file.status = 'accepted'
                 new_file.kept = True
