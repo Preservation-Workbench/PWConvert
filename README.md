@@ -19,7 +19,7 @@ original files. Use at own risk.
 3. Make sure [uv](https://docs.astral.sh/uv/getting-started/installation/) is installed
 4. Install scripts globally
    ```sh
-   uv tool install --force .
+   uv tool install --force --no-cache .
    ```
 
    You will see which scripts are installed by uv. See also [scripts.yml](./scripts.yml).
