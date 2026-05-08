@@ -9,6 +9,11 @@ While this software can convert files within the source folder, it is
 recommended to convert to a destination folder, to avoid risk of loosing
 original files. Use at own risk.
 
+# Requirements
+
+- A Linux distribution with the apt package manager
+- Unoserver (see installation instructions)
+
 # Installation
 
 1. Clone repo to desired location
@@ -27,6 +32,10 @@ original files. Use at own risk.
    ```sh
    sudo ./install.sh
    ```
+7. Install Unoserver in system Python if it's not present
+  ```sh
+  uv tool install unoserver --python $(which python3)
+  ```
 
 # How to use
 
