@@ -71,7 +71,7 @@ if [ ! -f /home/$OWNER/.local/bin/pdfcpu ]; then
 fi
 
 cecho "CYAN" "Installing ODAFileConverter..";
-curl -L https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_26.12.deb -o ODAFileConverter.deb && apt install ./ODAFileConverter.deb && rm -f ODAFileConverter.deb
+curl -L https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_27.1.deb -o ODAFileConverter.deb && apt install ./ODAFileConverter.deb && rm -f ODAFileConverter.deb
 recho $?;
 
 cecho "CYAN" "Fix fuse permissions..";
