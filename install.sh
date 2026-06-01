@@ -91,3 +91,12 @@ if [ $(fc-list | grep -c Calibri) -eq 0 ]; then
     recho $?;
 fi
 
+# Remove old installation with uv tool
+if command -v uv >/dev/null 2>&1; then
+    uv tool uninstall unoserver >/dev/null 2>&1 || true
+fi
+
+cecho "CYAN" "Install unoserver in system python"
+sudo PIP_BREAK_SYSTEM_PACKAGES=1 /usr/bin/python3 -m pip install --upgrade unoserver
+
+

@@ -32,10 +32,6 @@ original files. Use at own risk.
    ```sh
    sudo ./install.sh
    ```
-7. Install Unoserver in system Python if it's not present
-  ```sh
-  uv tool install unoserver --python $(which python3)
-  ```
 
 # How to use
 
