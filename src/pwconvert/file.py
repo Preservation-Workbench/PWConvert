@@ -176,9 +176,9 @@ class File:
                   f"{self.path[0:60]}", end=" ", flush=True)
 
         if self.source_id and os.path.isfile(os.path.join(dest_dir, self.path)):
-            source_path = os.path.join(dest_dir, self.path)
-        else:
-            source_path = os.path.join(source_dir, self.path)
+            source_dir = dest_dir
+
+        source_path = os.path.join(source_dir, self.path)
 
         if self.mime in ['', 'None', None]:
             self.set_metadata(source_path, source_dir)
@@ -362,11 +362,11 @@ class File:
                 self.status not in ['skipped', 'failed', 'timeout']
             ):
                 self.status = 'renamed'
-                self.kept = None
+                self.kept = 0
                 dest_name = self._stem + (self.ext if not mime_ext else mime_ext)
                 copy_path = Path(dest_dir, subfolder, self._parent, dest_name)
                 norm_path = relpath(copy_path, start=dest_dir)
-            if (self.source_id is None and source_dir != dest_dir) or self.status == 'renamed':
+            if (self.source_id is None and source_dir != dest_dir):
                 try:
                     shutil.copyfile(source_path, copy_path)
                 except Exception as e:
