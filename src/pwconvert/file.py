@@ -71,11 +71,28 @@ class File:
             result = subprocess.run(cmd, capture_output=True, text=True)
             fileinfo = result.stdout
             self.mime = fileinfo.split(';')[0]
+            self.format = magic.from_file(source_path).split(',')[0]
             # file command uses wrong mimetype in older versions
             if self.mime == 'application/csv':
                 self.mime = 'text/csv'
+            if self.mime == 'application/octet-stream':
+                with open(source_path, 'rb') as f:
+                    data = f.read()
+                    start = data.find(b"%PDF-")
+                    if start > 0:
+                        # self.mime = 'application/pdf'
+                        process = subprocess.Popen(
+                            ['file', '-i', '-b', '-'],
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE
+                        )
+                        content = data[start:]
+                        stdout, _ = process.communicate(content)
+                        fileinfo = stdout.decode('utf-8')
+                        self.mime = fileinfo.split(';')[0]
+                        self.format = magic.from_buffer(content).split(',')[0] 
             self.encoding = fileinfo.split(';')[1].replace('charset=', '').strip()
-            self.format = magic.from_file(source_path).split(',')[0]
             self.size = os.path.getsize(source_path)
 
         if not self.encoding and (
