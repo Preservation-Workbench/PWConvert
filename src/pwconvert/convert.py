@@ -28,8 +28,8 @@ import petl as etl
 
 from .storage import Storage
 from .file import File
-from .util import (remove_file, start_uno_server, make_filelist,
-                   filelist_to_storage, run_shell_cmd)
+from .util import (remove_file, start_uno_server, start_sf_server,
+                   make_filelist, filelist_to_storage, run_shell_cmd)
 from .config import cfg, converters
 
 cwd = os.getcwd()
@@ -152,6 +152,7 @@ def convert(
         count_remains = store.get_row_count(conds, params)
 
         start_uno_server()
+        start_sf_server()
         if identify_only:
             msg = f"Identifies {count_remains} files. "
         else:

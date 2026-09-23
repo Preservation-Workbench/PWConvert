@@ -155,6 +155,27 @@ def uno_server_running():
     return False
 
 
+def start_sf_server():
+    if not cfg['use_siegfried'] or sf_server_running():
+        return
+
+    print('Starting Siegfried server ...')
+    subprocess.Popen(["sf", "-serve", f"{cfg['siegfried_endpoint']}"])
+
+    for _ in range(10):  # Sjekk i opptil 2 sekunder
+        time.sleep(0.2)
+        if sf_server_running():
+            break
+
+
+def sf_server_running():
+    for process in psutil.process_iter():
+        if process.name() == 'sf':
+            return True
+
+    return False
+
+
 def remove_fields(table, *args):
     """Remove fields from petl table"""
     for field in args:

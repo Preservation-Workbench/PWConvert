@@ -18,6 +18,7 @@ svn-rename: false
 debug: false
 # Use Siegfried to identify file type
 use_siegfried: true
+siegfried_endpoint: localhost:5138
 # set timeout in seconds for file converters
 timeout: 60
 # Characters in local language, used to find encoding in `bin/unzip.py`

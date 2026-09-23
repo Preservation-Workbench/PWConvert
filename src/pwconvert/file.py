@@ -11,6 +11,7 @@ from shlex import quote
 import time
 import mimetypes
 import datetime
+import requests
 from rich.console import Console
 
 import magic
@@ -52,14 +53,17 @@ class File:
 
     def set_metadata(self, source_path, source_dir):
         if cfg['use_siegfried']:
-            cmd = ['sf', '-json', source_path]
-            p = subprocess.Popen(cmd, cwd=source_dir, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
-            out, err = p.communicate()
+            url = f"http://{cfg['siegfried_endpoint']}/identify"
+            params = {
+                "file": source_path,
+                "format": "json"
+            }
+            proxies = {"http": None, "https": None}
+            response = requests.get(url, params=params, proxies=proxies)
 
             self.encoding = None
-            if not err:
-                fileinfo = json.loads(out)
+            if response.status_code == 200:
+                fileinfo = response.json()
                 self.mime = fileinfo['files'][0]['matches'][0]['mime']
                 self.format = fileinfo['files'][0]['matches'][0]['format']
                 self.version = fileinfo['files'][0]['matches'][0]['version']
